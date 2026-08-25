@@ -3,121 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LangGraph Support Agent — Lab Demo</title>
+  <title>LangGraph Support Chat Demo</title>
   <style>
-    :root { --bg:#08111f; --panel:#101c2e; --panel2:#14243a; --line:#263954; --text:#edf4ff; --muted:#91a5bf; --cyan:#54d6ff; --green:#54e39a; --amber:#ffc857; --red:#ff718b; }
-    * { box-sizing:border-box; }
-    body { margin:0; color:var(--text); background:radial-gradient(circle at 80% -10%,#173a57 0,#08111f 42%); font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; }
-    .shell { max-width:1420px; margin:auto; padding:28px; }
-    .top { display:flex; justify-content:space-between; gap:24px; align-items:flex-start; margin-bottom:24px; }
-    .eyebrow { color:var(--cyan); letter-spacing:.13em; text-transform:uppercase; font-size:11px; font-weight:800; }
-    h1 { margin:6px 0 4px; font-size:clamp(26px,4vw,42px); letter-spacing:-.04em; }
-    .sub { color:var(--muted); margin:0; max-width:700px; }
-    .live { border:1px solid #2d805f; color:var(--green); background:#113025; border-radius:999px; padding:8px 13px; font-weight:800; white-space:nowrap; }
-    .grid { display:grid; grid-template-columns:220px minmax(0,1fr) 300px; gap:16px; align-items:start; }
-    .panel { background:linear-gradient(145deg,rgba(20,36,58,.96),rgba(13,25,42,.96)); border:1px solid var(--line); border-radius:18px; box-shadow:0 18px 50px #0002; }
-    .panel-pad { padding:18px; }
-    .panel-title { color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.1em; font-size:11px; margin-bottom:12px; }
-    .scenario { width:100%; text-align:left; color:var(--text); background:transparent; border:1px solid transparent; border-radius:11px; padding:11px 12px; cursor:pointer; margin:3px 0; }
-    .scenario:hover,.scenario.active { background:#1a304a; border-color:#315373; }
-    .scenario small { display:block; color:var(--muted); margin-top:2px; }
-    .pill { display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px; font-size:11px; font-weight:800; background:#20344d; color:#c6d7ec; }
-    .ok { color:var(--green); background:#123b2d; } .warn { color:var(--amber); background:#493717; } .bad { color:var(--red); background:#451d2b; }
-    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
-    .metric { padding:14px; border:1px solid var(--line); border-radius:14px; background:#0d1a2b; }
-    .metric b { display:block; font-size:25px; letter-spacing:-.04em; margin-top:2px; }
-    .metric span { color:var(--muted); font-size:11px; }
-    .ticket { color:#d8e8fb; background:#0b1727; border:1px solid #223752; border-radius:12px; padding:14px; margin-bottom:16px; }
-    .ticket strong { color:var(--cyan); display:block; margin-bottom:5px; }
-    .route-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:14px; }
-    .route-name { font-size:24px; font-weight:850; letter-spacing:-.03em; }
-    .flow { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:16px 0 20px; }
-    .node { border:1px solid #385475; background:#162a44; border-radius:10px; padding:9px 11px; font-weight:750; }
-    .node.final { border-color:#31856b; background:#123b30; color:#9ef0c3; }
-    .arrow { color:#6583a6; font-weight:900; }
-    .details { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .detail { border:1px solid var(--line); border-radius:12px; padding:12px; background:#0d192a; }
-    .detail label { display:block; color:var(--muted); font-size:11px; margin-bottom:3px; }
-    .detail strong { font-size:16px; }
-    .timeline { display:grid; gap:7px; max-height:390px; overflow:auto; padding-right:3px; }
-    .event { display:grid; grid-template-columns:28px 1fr auto; gap:9px; align-items:center; padding:9px 10px; background:#0c1829; border:1px solid #1e324c; border-radius:10px; }
-    .event .dot { width:10px; height:10px; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 4px #54d6ff1c; }
-    .event:last-child .dot { background:var(--green); }
-    .event small { color:var(--muted); }
-    .evidence { display:grid; gap:10px; }
-    .evidence-card { border:1px solid var(--line); border-radius:13px; padding:13px; background:#0d192a; }
-    .evidence-card h3 { margin:0 0 5px; font-size:14px; }
-    .evidence-card p { color:var(--muted); margin:0; font-size:12px; }
-    .toggle { display:flex; gap:6px; margin:9px 0 2px; }
-    .toggle button { color:var(--muted); background:#16263d; border:1px solid #29425e; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px; }
-    .toggle button.selected { color:var(--text); border-color:var(--cyan); background:#173a50; }
-    .architecture { margin-top:16px; }
-    .architecture p { color:var(--muted); margin:5px 0 0; }
-    code { color:#b8eaff; }
-    footer { color:#6f86a3; font-size:11px; margin-top:18px; }
-    @media (max-width:1050px) { .grid { grid-template-columns:190px minmax(0,1fr); } .right { grid-column:1/-1; } }
-    @media (max-width:700px) { .shell { padding:16px; } .top { display:block; } .live { display:inline-block; margin-top:15px; } .grid { display:block; } .left,.right { margin-top:16px; } .metrics { grid-template-columns:repeat(2,1fr); } }
+    :root{--bg:#07111f;--panel:#0e1b2d;--line:#29415f;--text:#edf6ff;--muted:#8ea5c0;--cyan:#55d8ff;--green:#59e49c;--amber:#ffc857;--red:#ff718b}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% -20%,#1e4561 0,#07111f 45%);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}.shell{max-width:1500px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}.eyebrow{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.top h1{font-size:32px;letter-spacing:-.04em;margin:5px 0}.top p{color:var(--muted);margin:0}.live{border:1px solid #2d805f;color:var(--green);background:#113025;padding:7px 12px;border-radius:99px;font-weight:800;font-size:12px}.layout{display:grid;grid-template-columns:330px minmax(420px,1fr) 310px;gap:14px}.panel{background:linear-gradient(145deg,#12243bee,#0c1929ee);border:1px solid var(--line);border-radius:17px;box-shadow:0 18px 45px #0003}.pad{padding:16px}.title{color:var(--muted);font-size:10px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin-bottom:10px}.chat{height:650px;display:flex;flex-direction:column}.messages{flex:1;overflow:auto;padding:2px 2px 10px}.bubble{max-width:90%;padding:10px 12px;border-radius:13px;margin:8px 0}.user{background:#1b3854;margin-left:auto}.agent{background:#142b42;border:1px solid #294967}.bubble small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}.samples{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.sample,.send{cursor:pointer;border:1px solid #315273;background:#152b44;color:#d8eafe;border-radius:8px;padding:6px 8px;font-size:11px}.sample:hover{border-color:var(--cyan)}textarea{width:100%;resize:none;min-height:62px;color:var(--text);background:#091625;border:1px solid #29415f;border-radius:10px;padding:10px;font:inherit}.composer{border-top:1px solid var(--line);padding-top:12px}.composer-row{display:flex;justify-content:space-between;align-items:center;margin-top:7px}.send{background:#1a6383;border-color:#55d8ff;font-weight:800}.graph{min-height:650px}.graph-head{display:flex;justify-content:space-between;align-items:start;gap:10px}.route-badge{background:#19334b;color:var(--cyan);font-weight:850;border-radius:999px;padding:6px 10px}.graph-canvas{position:relative;min-height:410px;margin-top:12px;border:1px solid #223c59;border-radius:13px;background:#091726;overflow:hidden}.graph-canvas:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#1d38521c 1px,transparent 1px),linear-gradient(90deg,#1d38521c 1px,transparent 1px);background-size:28px 28px}.node{position:absolute;z-index:2;min-width:96px;text-align:center;padding:9px 7px;background:#152a43;border:1px solid #3a5778;border-radius:9px;font-size:11px;font-weight:800;transition:.25s}.node.active{border-color:var(--cyan);background:#174b66;box-shadow:0 0 0 4px #55d8ff25,0 0 22px #55d8ff55}.node.done{border-color:#39866d;background:#123a30;color:#a9f5ca}.node.risky{border-color:#a4792c}.node.dead{border-color:#a44c61;color:#ffb1be}.n-intake{left:5%;top:40%}.n-classify{left:20%;top:40%}.n-answer{left:40%;top:13%}.n-tool{left:40%;top:40%}.n-evaluate{left:59%;top:40%}.n-clarify{left:40%;top:68%}.n-risky{left:40%;top:83%}.n-approval{left:59%;top:83%}.n-retry{left:78%;top:40%}.n-dead{left:78%;top:68%}.n-finalize{left:78%;top:13%}.edge{position:absolute;z-index:1;height:2px;background:#34506d;transform-origin:left center}.graph-caption{color:var(--muted);font-size:12px;margin-top:10px}.route-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.stat{background:#0a1727;border:1px solid #223b58;border-radius:10px;padding:9px}.stat label{display:block;color:var(--muted);font-size:10px}.stat b{font-size:16px}.evidence{min-height:650px}.card{background:#0a1727;border:1px solid #223b58;border-radius:11px;padding:11px;margin-bottom:9px}.card h3{font-size:12px;margin:0 0 5px}.card p{color:var(--muted);font-size:12px;margin:2px 0}.ok{color:var(--green)}.warn{color:var(--amber)}.log{height:270px;overflow:auto}.log-line{border-left:2px solid var(--cyan);padding:5px 8px;margin:5px 0;background:#0c1a2b;font-size:11px}.log-line small{color:var(--muted);display:block}.footer{color:#7289a5;font-size:11px;margin-top:13px}@media(max-width:1100px){.layout{grid-template-columns:300px 1fr}.evidence{grid-column:1/-1;min-height:0}}@media(max-width:720px){.shell{padding:13px}.top{display:block}.live{display:inline-block;margin-top:12px}.layout{display:block}.graph,.evidence{margin-top:13px}.chat{height:570px}.route-summary{grid-template-columns:repeat(2,1fr)}.node{min-width:78px;font-size:10px}}
   </style>
 </head>
 <body>
-  <main class="shell">
-    <header class="top">
-      <div><div class="eyebrow">Day 23 · Track 3 · Agentic Orchestration</div><h1>Support Ticket Agent</h1><p class="sub">Một màn hình demo cho routing, retry bounded, approval gate, audit trail, metrics và persistence.</p></div>
-      <div class="live">● LAB RUN COMPLETE</div>
-    </header>
-
-    <section class="metrics">
-      <div class="metric"><span>SCENARIOS</span><b>7 / 7</b><span>coverage đạt</span></div>
-      <div class="metric"><span>SUCCESS RATE</span><b>100%</b><span>expected route + output</span></div>
-      <div class="metric"><span>RETRIES</span><b>3</b><span>S05: 2 · S07: 1</span></div>
-      <div class="metric"><span>APPROVALS</span><b>2</b><span>S04 · S06 risky</span></div>
-    </section>
-
-    <section class="grid">
-      <aside class="panel panel-pad left"><div class="panel-title">Scenarios</div><div id="scenarioList"></div></aside>
-      <section class="panel panel-pad">
-        <div class="ticket"><strong id="scenarioId"></strong><span id="query"></span></div>
-        <div class="route-head"><div><div class="panel-title">Actual route</div><div class="route-name" id="routeName"></div></div><div id="status"></div></div>
-        <div class="flow" id="flow"></div>
-        <div class="details" id="details"></div>
-        <div class="panel-title" style="margin-top:20px">Audit event trail</div>
-        <div class="timeline" id="timeline"></div>
-      </section>
-      <aside class="panel panel-pad right"><div class="panel-title">Evidence</div><div class="evidence">
-        <div class="evidence-card"><h3>Persistence</h3><p><b style="color:var(--green)">MemorySaver · proven</b></p><p id="persistence"></p></div>
-        <div class="evidence-card"><h3>Approval gate</h3><p>Risky action không chạy trước approval.</p><div class="toggle"><button id="approveBtn" class="selected">Approved</button><button id="rejectBtn">Rejected</button></div><p id="approvalNote"></p></div>
-        <div class="evidence-card"><h3>Bounded retry</h3><p><code>attempt &lt; max_attempts</code> → tool; chạm giới hạn → dead-letter.</p></div>
-        <div class="evidence-card"><h3>Artifacts</h3><p><code>metrics.json</code> · <code>audit_events.jsonl</code> · <code>persistence_evidence.json</code></p></div>
-      </div></aside>
-    </section>
-
-    <section class="panel panel-pad architecture"><div class="panel-title">Graph contract</div><div class="flow"><span class="node">START</span><span class="arrow">→</span><span class="node">intake</span><span class="arrow">→</span><span class="node">classify</span><span class="arrow">→</span><span class="node">conditional route</span><span class="arrow">→</span><span class="node final">finalize</span><span class="arrow">→</span><span class="node final">END</span></div><p>Typed state · append-only events · LLM structured classification · grounded answer · human approval · retry bound · checkpointer thread history.</p></section>
-    <footer>Demo snapshot — không chứa API key và không gọi provider từ browser. Dữ liệu lấy từ lần chạy lab đã validate.</footer>
-  </main>
-  <script>
-    const scenarios = [
-      {id:'S01_simple', query:'How do I reset my password?', route:'simple', expected:'simple', nodes:4, retries:0, approval:false, latency:3081, history:6, events:['intake','classify','answer','finalize']},
-      {id:'S02_tool', query:'Please lookup order status for order 12345', route:'tool', expected:'tool', nodes:6, retries:0, approval:false, latency:1885, history:8, events:['intake','classify','tool','evaluate','answer','finalize']},
-      {id:'S03_missing', query:'Can you fix it?', route:'missing_info', expected:'missing_info', nodes:4, retries:0, approval:false, latency:705, history:6, events:['intake','classify','clarify','finalize']},
-      {id:'S04_risky', query:'Refund this customer and send confirmation email', route:'risky', expected:'risky', nodes:8, retries:0, approval:true, latency:4555, history:10, events:['intake','classify','risky_action','approval','tool','evaluate','answer','finalize']},
-      {id:'S05_error', query:'Timeout failure while processing request', route:'error', expected:'error', nodes:10, retries:2, approval:false, latency:4688, history:12, events:['intake','classify','retry','tool','evaluate','retry','tool','evaluate','answer','finalize']},
-      {id:'S06_delete', query:'Delete customer account after support verification', route:'risky', expected:'risky', nodes:8, retries:0, approval:true, latency:9379, history:10, events:['intake','classify','risky_action','approval','tool','evaluate','answer','finalize']},
-      {id:'S07_dead_letter', query:'System failure cannot recover after multiple attempts', route:'error', expected:'error', nodes:5, retries:1, approval:false, latency:540, history:7, events:['intake','classify','retry','dead_letter','finalize']}
-    ];
-    let selected = scenarios[0], rejected = false;
-    const $ = id => document.getElementById(id);
-    function renderList(){ $('scenarioList').innerHTML = scenarios.map(s => `<button class="scenario ${s.id===selected.id?'active':''}" data-id="${s.id}"><b>${s.id}</b><small>${s.route} · ${s.success===false?'fail':'pass'}</small></button>`).join(''); document.querySelectorAll('.scenario').forEach(b=>b.onclick=()=>{selected=scenarios.find(s=>s.id===b.dataset.id); rejected=false; render();}); }
-    function render(){
-      renderList(); $('scenarioId').textContent=selected.id; $('query').textContent=selected.query; $('routeName').textContent=selected.route;
-      $('status').innerHTML=`<span class="pill ok">✓ route matched</span>`;
-      let events=selected.events;
-      if(selected.approval && rejected) events=['intake','classify','risky_action','approval','clarify','finalize'];
-      $('flow').innerHTML=events.map((e,i)=>`${i?'<span class="arrow">→</span>':''}<span class="node ${e==='finalize'?'final':''}">${e}</span>`).join('');
-      $('details').innerHTML=`<div class="detail"><label>Expected / actual</label><strong>${selected.expected} → ${selected.route}</strong></div><div class="detail"><label>Nodes visited</label><strong>${events.length}</strong></div><div class="detail"><label>Latency</label><strong>${selected.latency} ms</strong></div><div class="detail"><label>Retry count</label><strong>${selected.retries}</strong></div>`;
-      $('timeline').innerHTML=events.map((e,i)=>`<div class="event"><span class="dot"></span><div><b>${e}</b><small>${e==='finalize'?'workflow finished':'node completed'}</small></div><small>#${String(i+1).padStart(2,'0')}</small></div>`).join('');
-      $('persistence').textContent=`thread-${selected.id} · ${selected.history} snapshots · same thread_id`; $('approveBtn').classList.toggle('selected',!rejected); $('rejectBtn').classList.toggle('selected',rejected); $('approvalNote').textContent=selected.approval ? (rejected?'approval rejected → clarify → finalize (không gọi tool)':'approval approved → tool → evaluate → answer') : 'Scenario này không cần approval.';
-    }
-    $('approveBtn').onclick=()=>{rejected=false;render();}; $('rejectBtn').onclick=()=>{if(selected.approval){rejected=true;render();}}; render();
-  </script>
-</body>
-</html>
+<main class="shell">
+  <header class="top"><div><div class="eyebrow">Day 23 · Track 3 · LangGraph</div><h1>Support Ticket Agent</h1><p>Chat → graph execution → answer + audit evidence</p></div><div class="live">● DEMO READY</div></header>
+  <div class="layout">
+    <section class="panel pad chat"><div class="title">Chatbot</div><div id="messages" class="messages"></div><div class="composer"><div class="samples"><button class="sample" data-query="How do I reset my password?">Simple</button><button class="sample" data-query="Please lookup order status for order 12345">Tool lookup</button><button class="sample" data-query="Can you fix it?">Missing info</button><button class="sample" data-query="Refund this customer and send confirmation email">Risky</button><button class="sample" data-query="System failure cannot recover after multiple attempts">Dead-letter</button></div><textarea id="input" placeholder="Nhập support ticket để chạy demo..."></textarea><div class="composer-row"><small style="color:var(--muted)">Không gọi API từ browser</small><button id="send" class="send">Run graph ↗</button></div></div></section>
+    <section class="panel pad graph"><div class="graph-head"><div><div class="title">Live graph trace</div><div id="traceText">Chọn ticket để bắt đầu</div></div><div id="routeBadge" class="route-badge">idle</div></div><div id="canvas" class="graph-canvas">
+      <div class="node n-intake" data-node="intake">intake</div><div class="node n-classify" data-node="classify">classify</div><div class="node n-answer" data-node="answer">answer</div><div class="node n-tool" data-node="tool">tool</div><div class="node n-evaluate" data-node="evaluate">evaluate</div><div class="node n-clarify" data-node="clarify">clarify</div><div class="node n-risky" data-node="risky_action">risky_action</div><div class="node n-approval" data-node="approval">approval</div><div class="node n-retry" data-node="retry">retry</div><div class="node n-dead" data-node="dead_letter">dead_letter</div><div class="node n-finalize" data-node="finalize">finalize</div>
+    </div><div class="graph-caption">Mọi branch converge về <b>finalize → END</b>.</div><div class="route-summary"><div class="stat"><label>ROUTE</label><b id="routeStat">—</b></div><div class="stat"><label>RETRIES</label><b id="retryStat">0</b></div><div class="stat"><label>APPROVAL</label><b id="approvalStat">—</b></div><div class="stat"><label>STATUS</label><b id="statusStat" class="ok">ready</b></div></div></section>
+    <aside class="panel pad evidence"><div class="title">Evidence console</div><div class="card"><h3>State snapshot</h3><p>thread_id: <b id="thread">—</b></p><p>route: <b id="stateRoute">—</b></p><p>attempt: <b id="attempt">0 / 3</b></p></div><div class="card"><h3>Approval gate</h3><p id="approvalEvidence">Chưa có risky action.</p></div><div class="card"><h3>Persistence</h3><p class="ok">MemorySaver · history proven</p><p id="history">Chọn ticket để xem checkpoint.</p></div><div class="card"><h3>Audit log</h3><div id="log" class="log"><div class="log-line"><small>waiting</small>Graph event trail sẽ xuất hiện ở đây.</div></div></div></aside>
+  </div>
+  <p class="footer">Standalone demo snapshot. Không chứa API key; behavior mô phỏng theo contract và evidence đã validate của lab.</p>
+</main>
+<script>
+const ROUTES={simple:{path:['intake','classify','answer','finalize'],answer:'Password reset guidance is ready.'},tool:{path:['intake','classify','tool','evaluate','answer','finalize'],answer:'The lookup tool returned the requested order context.'},missing_info:{path:['intake','classify','clarify','finalize'],answer:'Mình cần thêm thông tin cụ thể để xử lý ticket an toàn.'},risky:{path:['intake','classify','risky_action','approval','tool','evaluate','answer','finalize'],answer:'The approved action was completed with grounded tool context.'},error:{path:['intake','classify','retry','tool','evaluate','retry','tool','evaluate','answer','finalize'],answer:'The transient failure recovered after bounded retries.'}};
+const SAMPLES={'How do I reset my password?':'simple','Please lookup order status for order 12345':'tool','Can you fix it?':'missing_info','Refund this customer and send confirmation email':'risky','System failure cannot recover after multiple attempts':'error'};
+let run=0,timer;const $=id=>document.getElementById(id);
+const addMessage=(who,text)=>{$('messages').insertAdjacentHTML('beforeend',`<div class="bubble ${who}"><small>${who==='user'?'YOU':'AGENT'}</small>${text}</div>`);$('messages').scrollTop=$('messages').scrollHeight};
+document.querySelectorAll('.sample').forEach(b=>b.onclick=()=>{$('input').value=b.dataset.query;runGraph(b.dataset.query)});$('send').onclick=()=>runGraph($('input').value.trim());$('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('send').click()}});
+function classify(q){const s=q.toLowerCase();if(/refund|delete|cancel|send .*email|purchase|change access/.test(s))return'risky';if(/lookup|status|tracking|search|order/.test(s))return'tool';if(/\bit\b|\bthis\b|\bthat\b/.test(s)&&q.split(/\s+/).length<8)return'missing_info';if(/timeout|failure|error|crash|outage|unavailable|cannot recover/.test(s))return'error';return'simple'}
+function clearTrace(){clearTimeout(timer);document.querySelectorAll('.node').forEach(n=>n.className='node');$('log').innerHTML=''}
+function addLog(node,message){const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});$('log').insertAdjacentHTML('beforeend',`<div class="log-line"><small>${now} · ${node}</small>${message}</div>`);$('log').scrollTop=$('log').scrollHeight}
+function runGraph(query){if(!query)return;clearTrace();run++;const route=classify(query),spec=ROUTES[route],thread=`demo-${String(run).padStart(3,'0')}`;addMessage('user',query);$('traceText').textContent=`Running conditional route for “${query}”`;$('routeBadge').textContent=route;$('routeStat').textContent=route;$('stateRoute').textContent=route;$('thread').textContent=thread;$('retryStat').textContent=route==='error'?'2':'0';$('attempt').textContent=`${route==='error'?'2':'0'} / 3`;$('approvalStat').textContent=route==='risky'?'required':'none';$('statusStat').textContent='running';$('statusStat').className='warn';$('approvalEvidence').textContent=route==='risky'?'Gate pending: risky_action must reach approval before tool.':'Chưa có risky action.';$('history').textContent=`${thread} · snapshots đang ghi nhận...`;
+let i=0;const step=()=>{if(i>=spec.path.length){$('statusStat').textContent='complete';$('statusStat').className='ok';$('traceText').textContent='Workflow finished · finalize → END';let msg=spec.answer;if(route==='error'&&query.toLowerCase().includes('cannot recover'))msg='Unable to recover within max_attempts; escalated to dead-letter.';if(route==='missing_info')msg='Để xử lý ticket, bạn vui lòng bổ sung object/context còn thiếu.';addMessage('agent',msg);$('history').textContent=`${thread} · ${spec.path.length+2} snapshots · state history proven`;if(route==='risky')$('approvalEvidence').textContent='Approved: approval → tool → evaluate. Rejected branch: approval → clarify → finalize.';return}const name=spec.path[i],el=document.querySelector(`[data-node="${name}"]`);if(el){el.classList.add('active');if(i)document.querySelector(`[data-node="${spec.path[i-1]}"]`)?.classList.add('done')}let msg='node completed';if(name==='classify')msg=`route classified as ${route}`;if(name==='retry')msg='attempt incremented; bounded retry check';if(name==='approval')msg='approval gate observed before tool';if(name==='dead_letter')msg='max_attempts reached; fail closed';if(name==='finalize')msg='audit terminal event recorded';addLog(name,msg);i++;timer=setTimeout(step,360)};step()}
+addMessage('agent','Xin chào. Nhập ticket hoặc chọn sample để xem chatbot, graph trace và audit evidence chạy cùng nhau.');
+</script>
+</body></html>
