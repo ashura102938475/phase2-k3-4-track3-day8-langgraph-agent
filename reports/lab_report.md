@@ -23,13 +23,18 @@
 
 | Scenario | Expected route | Actual route | Success | Nodes | Retries | Approval visits | Approval observed | Latency (ms) | Errors |
 |---|---|---|---|---:|---:|---:|---|---:|---|
-| S01_simple | simple | simple | yes | 4 | 0 | 0 | no | 3081 | — |
-| S02_tool | tool | tool | yes | 6 | 0 | 0 | no | 1885 | — |
-| S03_missing | missing_info | missing_info | yes | 4 | 0 | 0 | no | 705 | — |
-| S04_risky | risky | risky | yes | 8 | 0 | 1 | yes | 4555 | — |
-| S05_error | error | error | yes | 10 | 2 | 0 | no | 4688 | Retry 1 requested after an unsatisfactory tool result.; Retry 2 requested after an unsatisfactory tool result. |
-| S06_delete | risky | risky | yes | 8 | 0 | 1 | yes | 9379 | — |
-| S07_dead_letter | error | error | yes | 5 | 1 | 0 | no | 540 | Retry 1 requested after an unsatisfactory tool result. |
+| S01_simple | simple | simple | yes | 4 | 0 | 0 | no | 4233 | — |
+| S02_tool | tool | tool | yes | 6 | 0 | 0 | no | 8883 | — |
+| S03_missing | missing_info | missing_info | yes | 4 | 0 | 0 | no | 660 | — |
+| S04_risky | risky | risky | yes | 8 | 0 | 1 | yes | 32342 | — |
+| S05_error | error | error | yes | 10 | 2 | 0 | no | 7879 | Retry 1 requested after an unsatisfactory tool result.; Retry 2 requested after an unsatisfactory tool result. |
+| S06_delete | risky | risky | yes | 8 | 0 | 1 | yes | 4489 | — |
+| S07_dead_letter | error | error | yes | 5 | 1 | 0 | no | 10878 | Retry 1 requested after an unsatisfactory tool result. |
+
+The CLI also emits the complete reducer-backed audit event stream to
+`outputs/audit_events.jsonl` and the per-thread checkpoint history proof to
+`outputs/persistence_evidence.json`. These artifacts are the inspectable evidence
+behind the node, retry, approval, and persistence claims above.
 
 ## 4. Architecture
 

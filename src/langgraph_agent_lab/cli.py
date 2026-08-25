@@ -32,6 +32,8 @@ def run_scenarios(
     checkpointer = build_checkpointer(cfg.get("checkpointer", "memory"), cfg.get("database_url"))
     graph = build_graph(checkpointer=checkpointer)
     metrics = []
+    audit_records: list[dict[str, object]] = []
+    persistence_records: list[dict[str, object]] = []
     for scenario in scenarios:
         state = initial_state(scenario)
         run_config: RunnableConfig = {"configurable": {"thread_id": state["thread_id"]}}
@@ -48,8 +50,52 @@ def run_scenarios(
                 scenario.requires_approval,
             )
         )
+        for event in final_state.get("events", []) or []:
+            audit_records.append(
+                {
+                    "scenario_id": scenario.id,
+                    "thread_id": state["thread_id"],
+                    **event,
+                }
+            )
+        if checkpointer is not None:
+            history = list(graph.get_state_history(run_config))
+            persistence_records.append(
+                {
+                    "scenario_id": scenario.id,
+                    "thread_id": state["thread_id"],
+                    "history_snapshots": len(history),
+                }
+            )
     report = summarize_metrics(metrics)
     write_metrics(report, output)
+    audit_path = Path(cfg.get("audit_path", output.with_name("audit_events.jsonl")))
+    audit_path.parent.mkdir(parents=True, exist_ok=True)
+    audit_path.write_text(
+        "".join(json.dumps(record, ensure_ascii=False) + "\n" for record in audit_records),
+        encoding="utf-8",
+    )
+    persistence_path = Path(
+        cfg.get("persistence_evidence_path", output.with_name("persistence_evidence.json"))
+    )
+    persistence_path.parent.mkdir(parents=True, exist_ok=True)
+    persistence_path.write_text(
+        json.dumps(
+            {
+                "backend": cfg.get("checkpointer", "memory"),
+                "records": persistence_records,
+                "history_proven": bool(persistence_records)
+                and all(
+                    isinstance(history_count := record.get("history_snapshots"), int)
+                    and history_count > 1
+                    for record in persistence_records
+                ),
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     if cfg.get("report_path"):
         write_report(report, cfg["report_path"])
     typer.echo(f"Wrote metrics to {output}")

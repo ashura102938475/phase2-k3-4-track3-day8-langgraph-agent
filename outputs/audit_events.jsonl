@@ -1,0 +1,45 @@
+{"scenario_id": "S01_simple", "thread_id": "thread-S01_simple", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S01_simple", "thread_id": "thread-S01_simple", "node": "classify", "event_type": "completed", "message": "classified as simple", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S01_simple", "thread_id": "thread-S01_simple", "node": "answer", "event_type": "completed", "message": "generated grounded answer", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S01_simple", "thread_id": "thread-S01_simple", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "classify", "event_type": "completed", "message": "classified as tool", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "message": "Tool result for: Please lookup order status for order 12345", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "evaluate", "event_type": "completed", "message": "tool result evaluated as success", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "answer", "event_type": "completed", "message": "generated grounded answer", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S03_missing", "thread_id": "thread-S03_missing", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S03_missing", "thread_id": "thread-S03_missing", "node": "classify", "event_type": "completed", "message": "classified as missing_info", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S03_missing", "thread_id": "thread-S03_missing", "node": "clarify", "event_type": "completed", "message": "requested missing information", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S03_missing", "thread_id": "thread-S03_missing", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "classify", "event_type": "completed", "message": "classified as risky", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "risky_action", "event_type": "pending_approval", "message": "prepared action for review", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "approval", "event_type": "completed", "message": "action approved", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "tool", "event_type": "completed", "message": "Tool result for: Refund this customer and send confirmation email", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "evaluate", "event_type": "completed", "message": "tool result evaluated as success", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "answer", "event_type": "completed", "message": "generated grounded answer", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "classify", "event_type": "completed", "message": "classified as error", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "retry", "event_type": "retrying", "message": "Retry 1 requested after an unsatisfactory tool result.", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "tool", "event_type": "failed", "message": "ERROR: transient tool outage (attempt 2)", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "evaluate", "event_type": "completed", "message": "tool result evaluated as needs_retry", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "retry", "event_type": "retrying", "message": "Retry 2 requested after an unsatisfactory tool result.", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "tool", "event_type": "completed", "message": "Tool result for: Timeout failure while processing request", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "evaluate", "event_type": "completed", "message": "tool result evaluated as success", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "answer", "event_type": "completed", "message": "generated grounded answer", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "classify", "event_type": "completed", "message": "classified as risky", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "risky_action", "event_type": "pending_approval", "message": "prepared action for review", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "approval", "event_type": "completed", "message": "action approved", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "tool", "event_type": "completed", "message": "Tool result for: Delete customer account after support verification", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "evaluate", "event_type": "completed", "message": "tool result evaluated as success", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "answer", "event_type": "completed", "message": "generated grounded answer", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S07_dead_letter", "thread_id": "thread-S07_dead_letter", "node": "intake", "event_type": "completed", "message": "query normalized", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S07_dead_letter", "thread_id": "thread-S07_dead_letter", "node": "classify", "event_type": "completed", "message": "classified as error", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S07_dead_letter", "thread_id": "thread-S07_dead_letter", "node": "retry", "event_type": "retrying", "message": "Retry 1 requested after an unsatisfactory tool result.", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S07_dead_letter", "thread_id": "thread-S07_dead_letter", "node": "dead_letter", "event_type": "failed", "message": "retry limit reached", "latency_ms": 0, "metadata": {}}
+{"scenario_id": "S07_dead_letter", "thread_id": "thread-S07_dead_letter", "node": "finalize", "event_type": "completed", "message": "workflow finished", "latency_ms": 0, "metadata": {}}

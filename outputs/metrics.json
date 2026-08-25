@@ -16,7 +16,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 3081,
+      "latency_ms": 4233,
       "errors": []
     },
     {
@@ -29,7 +29,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 1885,
+      "latency_ms": 8883,
       "errors": []
     },
     {
@@ -42,7 +42,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 705,
+      "latency_ms": 660,
       "errors": []
     },
     {
@@ -55,7 +55,7 @@
       "interrupt_count": 1,
       "approval_required": true,
       "approval_observed": true,
-      "latency_ms": 4555,
+      "latency_ms": 32342,
       "errors": []
     },
     {
@@ -68,7 +68,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 4688,
+      "latency_ms": 7879,
       "errors": [
         "Retry 1 requested after an unsatisfactory tool result.",
         "Retry 2 requested after an unsatisfactory tool result."
@@ -84,7 +84,7 @@
       "interrupt_count": 1,
       "approval_required": true,
       "approval_observed": true,
-      "latency_ms": 9379,
+      "latency_ms": 4489,
       "errors": []
     },
     {
@@ -97,7 +97,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 540,
+      "latency_ms": 10878,
       "errors": [
         "Retry 1 requested after an unsatisfactory tool result."
       ]

@@ -60,6 +60,11 @@ def render_report(metrics: MetricsReport) -> str:
 |---|---|---|---|---:|---:|---:|---|---:|---|
 {scenario_rows}
 
+The CLI also emits the complete reducer-backed audit event stream to
+`outputs/audit_events.jsonl` and the per-thread checkpoint history proof to
+`outputs/persistence_evidence.json`. These artifacts are the inspectable evidence
+behind the node, retry, approval, and persistence claims above.
+
 ## 4. Architecture
 
 The workflow is an 11-node `StateGraph`: `intake`, `classify`, `answer`, `tool`,

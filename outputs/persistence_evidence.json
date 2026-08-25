@@ -1,0 +1,41 @@
+{
+  "backend": "memory",
+  "records": [
+    {
+      "scenario_id": "S01_simple",
+      "thread_id": "thread-S01_simple",
+      "history_snapshots": 6
+    },
+    {
+      "scenario_id": "S02_tool",
+      "thread_id": "thread-S02_tool",
+      "history_snapshots": 8
+    },
+    {
+      "scenario_id": "S03_missing",
+      "thread_id": "thread-S03_missing",
+      "history_snapshots": 6
+    },
+    {
+      "scenario_id": "S04_risky",
+      "thread_id": "thread-S04_risky",
+      "history_snapshots": 10
+    },
+    {
+      "scenario_id": "S05_error",
+      "thread_id": "thread-S05_error",
+      "history_snapshots": 12
+    },
+    {
+      "scenario_id": "S06_delete",
+      "thread_id": "thread-S06_delete",
+      "history_snapshots": 10
+    },
+    {
+      "scenario_id": "S07_dead_letter",
+      "thread_id": "thread-S07_dead_letter",
+      "history_snapshots": 7
+    }
+  ],
+  "history_proven": true
+}

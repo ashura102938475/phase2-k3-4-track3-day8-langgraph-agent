@@ -1,3 +1,5 @@
 scenarios_path: data/sample/scenarios.jsonl
 checkpointer: memory
 report_path: reports/lab_report.md
+audit_path: outputs/audit_events.jsonl
+persistence_evidence_path: outputs/persistence_evidence.json
