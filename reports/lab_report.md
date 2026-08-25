@@ -7,7 +7,7 @@
 | Name | NGUYỄN ANH TRÀ |
 | Student ID | 2A202601735 |
 | Repository | https://github.com/ashura102938475/phase2-k3-4-track3-day8-langgraph-agent |
-| Audited base commit | `8d8ef5bf041ff25bd454f2df760d13f0034b9976` |
+| Audited implementation commit | `cc07854` |
 | Date | 2026-08-25 |
 
 No API key, environment dump, credential, or unrelated personal identifier is included in
