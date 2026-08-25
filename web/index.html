@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph Agent Lab</title>
+<style>
+  @font-face {
+    font-family: 'Pixel';
+    src: local('Courier New'), local('Consolas'), local('monospace');
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --bg: #2d5a27;
+    --bg-dark: #1e3d1a;
+    --bg-light: #3a7a32;
+    --content: #e8d44d;
+    --content-light: #f0e06e;
+    --content-dark: #c4a830;
+    --text-on-green: #e8d44d;
+    --text-on-yellow: #1e3d1a;
+    --border: #1a4015;
+    --node-idle: #1e3d1a;
+    --node-active: #e8d44d;
+    --node-done: #7ab86a;
+    --node-error: #c0392b;
+    --edge: #7ab86a;
+  }
+
+  body {
+    font-family: 'Courier New', Consolas, monospace;
+    background: var(--bg);
+    color: var(--text-on-green);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--bg-dark);
+    border-bottom: 3px solid var(--content);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--content);
+  }
+
+  header .status {
+    font-size: 11px;
+    color: var(--node-done);
+    border: 2px solid var(--node-done);
+    padding: 3px 10px;
+    text-transform: uppercase;
+  }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .graph-panel {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    border-right: 3px solid var(--content);
+  }
+
+  .graph-panel h2 {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--content);
+    margin-bottom: 12px;
+    border-bottom: 2px solid var(--content-dark);
+    padding-bottom: 6px;
+  }
+
+  .graph-container {
+    flex: 1;
+    position: relative;
+    border: 3px solid var(--content-dark);
+    background: var(--bg-dark);
+    overflow: auto;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  .chat-panel {
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-panel h2 {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--content);
+    padding: 12px 16px 6px;
+    border-bottom: 2px solid var(--content-dark);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .msg {
+    border: 2px solid var(--border);
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .msg-user {
+    background: var(--content);
+    color: var(--text-on-yellow);
+    border-color: var(--content-dark);
+    align-self: flex-end;
+    max-width: 90%;
+  }
+
+  .msg-bot {
+    background: var(--bg-dark);
+    color: var(--text-on-green);
+    border-color: var(--content-dark);
+    align-self: flex-start;
+    max-width: 90%;
+  }
+
+  .msg-bot .route-tag {
+    display: inline-block;
+    background: var(--content);
+    color: var(--text-on-yellow);
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .msg-bot .route-tag.error {
+    background: var(--node-error);
+    color: #fff;
+  }
+
+  .msg-bot .route-tag.risky {
+    background: #b8860b;
+    color: #fff;
+  }
+
+  .msg-system {
+    background: transparent;
+    color: var(--content-dark);
+    border: 1px dashed var(--content-dark);
+    font-size: 10px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .chat-input {
+    border-top: 3px solid var(--content);
+    padding: 12px 16px;
+    background: var(--bg-dark);
+    display: flex;
+    gap: 8px;
+  }
+
+  .chat-input input {
+    flex: 1;
+    background: var(--bg);
+    border: 3px solid var(--content-dark);
+    color: var(--content);
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+  }
+
+  .chat-input input::placeholder {
+    color: var(--bg-light);
+  }
+
+  .chat-input input:focus {
+    border-color: var(--content);
+  }
+
+  .chat-input button {
+    background: var(--content);
+    color: var(--text-on-yellow);
+    border: 3px solid var(--content-dark);
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 8px 18px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .chat-input button:hover {
+    background: var(--content-light);
+  }
+
+  .chat-input button:disabled {
+    background: var(--bg-dark);
+    color: var(--content-dark);
+    border-color: var(--border);
+    cursor: not-allowed;
+  }
+
+  .node-legend {
+    padding: 8px 16px;
+    background: var(--bg-dark);
+    border-top: 2px solid var(--content-dark);
+    font-size: 10px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-box {
+    width: 12px;
+    height: 12px;
+    border: 2px solid;
+  }
+
+  .legend-box.idle {
+    background: var(--node-idle);
+    border-color: var(--content-dark);
+  }
+
+  .legend-box.active {
+    background: var(--node-active);
+    border-color: var(--content);
+  }
+
+  .legend-box.done {
+    background: var(--node-done);
+    border-color: var(--node-done);
+  }
+
+  .legend-box.error {
+    background: var(--node-error);
+    border-color: var(--node-error);
+  }
+
+  .event-log {
+    max-height: 150px;
+    overflow-y: auto;
+    border-top: 2px solid var(--content-dark);
+    padding: 8px 16px;
+    font-size: 10px;
+    background: var(--bg-dark);
+  }
+
+  .event-log h3 {
+    font-size: 10px;
+    color: var(--content-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .event-entry {
+    color: var(--content-dark);
+    padding: 2px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .event-entry .ev-node {
+    color: var(--content);
+    font-weight: bold;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--content-dark);
+    border: 1px solid var(--bg-dark);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .pulsing {
+    animation: pulse 0.8s infinite;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LangGraph Agent Lab</h1>
+  <span class="status" id="connStatus">ready</span>
+</header>
+
+<div class="main">
+  <div class="graph-panel">
+    <h2>Workflow Graph</h2>
+    <div class="graph-container">
+      <canvas id="graphCanvas"></canvas>
+    </div>
+    <div class="node-legend">
+      <span class="legend-item"><span class="legend-box idle"></span> idle</span>
+      <span class="legend-item"><span class="legend-box active"></span> active</span>
+      <span class="legend-item"><span class="legend-box done"></span> done</span>
+      <span class="legend-item"><span class="legend-box error"></span> error</span>
+    </div>
+    <div class="event-log" id="eventLog">
+      <h3>Event Log</h3>
+    </div>
+  </div>
+
+  <div class="chat-panel">
+    <h2>Chat</h2>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Enter query..." autocomplete="off">
+      <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GRAPH_NODES = [
+  { id: 'START',     label: 'START',     x: 0, y: 0, type: 'terminal' },
+  { id: 'intake',    label: 'intake',    x: 0, y: 1, type: 'node' },
+  { id: 'classify',  label: 'classify',  x: 0, y: 2, type: 'node' },
+  { id: 'answer',    label: 'answer',    x: -2, y: 3, type: 'node' },
+  { id: 'tool',      label: 'tool',      x: -0.5, y: 3, type: 'node' },
+  { id: 'clarify',   label: 'clarify',   x: 1, y: 3, type: 'node' },
+  { id: 'risky_action', label: 'risky_action', x: 2.5, y: 3, type: 'node' },
+  { id: 'retry',     label: 'retry',     x: 4, y: 3, type: 'node' },
+  { id: 'evaluate',  label: 'evaluate',  x: -0.5, y: 4.5, type: 'node' },
+  { id: 'approval',  label: 'approval',  x: 2.5, y: 4.5, type: 'node' },
+  { id: 'dead_letter', label: 'dead_letter', x: 4, y: 4.5, type: 'node' },
+  { id: 'finalize',  label: 'finalize',  x: 0, y: 6, type: 'node' },
+  { id: 'END',       label: 'END',       x: 0, y: 7, type: 'terminal' },
+];
+
+const GRAPH_EDGES = [
+  { from: 'START', to: 'intake', type: 'fixed' },
+  { from: 'intake', to: 'classify', type: 'fixed' },
+  { from: 'classify', to: 'answer', type: 'conditional', label: 'simple' },
+  { from: 'classify', to: 'tool', type: 'conditional', label: 'tool' },
+  { from: 'classify', to: 'clarify', type: 'conditional', label: 'missing_info' },
+  { from: 'classify', to: 'risky_action', type: 'conditional', label: 'risky' },
+  { from: 'classify', to: 'retry', type: 'conditional', label: 'error' },
+  { from: 'tool', to: 'evaluate', type: 'fixed' },
+  { from: 'evaluate', to: 'answer', type: 'conditional', label: 'success' },
+  { from: 'evaluate', to: 'retry', type: 'conditional', label: 'needs_retry' },
+  { from: 'retry', to: 'tool', type: 'conditional', label: 'attempt < max' },
+  { from: 'retry', to: 'dead_letter', type: 'conditional', label: 'max reached' },
+  { from: 'risky_action', to: 'approval', type: 'fixed' },
+  { from: 'approval', to: 'tool', type: 'conditional', label: 'approved' },
+  { from: 'approval', to: 'clarify', type: 'conditional', label: 'rejected' },
+  { from: 'answer', to: 'finalize', type: 'fixed' },
+  { from: 'clarify', to: 'finalize', type: 'fixed' },
+  { from: 'dead_letter', to: 'finalize', type: 'fixed' },
+  { from: 'finalize', to: 'END', type: 'fixed' },
+];
+
+const NODE_W = 120;
+const NODE_H = 32;
+const GAP_X = 50;
+const GAP_Y = 60;
+const PAD = 40;
+
+let nodeStates = {};
+let activeEdges = [];
+
+const canvas = document.getElementById('graphCanvas');
+const ctx = canvas.getContext('2d');
+
+function resetGraph() {
+  nodeStates = {};
+  activeEdges = [];
+  GRAPH_NODES.forEach(n => { nodeStates[n.id] = 'idle'; });
+  drawGraph();
+}
+
+function computePositions() {
+  const minX = Math.min(...GRAPH_NODES.map(n => n.x));
+  const maxX = Math.max(...GRAPH_NODES.map(n => n.x));
+  const maxY = Math.max(...GRAPH_NODES.map(n => n.y));
+  const cols = maxX - minX + 1;
+  const rows = maxY + 1;
+  const w = cols * (NODE_W + GAP_X) + PAD * 2;
+  const h = rows * (NODE_H + GAP_Y) + PAD * 2;
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const positions = {};
+  GRAPH_NODES.forEach(n => {
+    positions[n.id] = {
+      px: PAD + (n.x - minX) * (NODE_W + GAP_X) + NODE_W / 2,
+      py: PAD + n.y * (NODE_H + GAP_Y) + NODE_H / 2,
+    };
+  });
+  return positions;
+}
+
+function drawGraph() {
+  const pos = computePositions();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  GRAPH_EDGES.forEach(e => {
+    const from = pos[e.from];
+    const to = pos[e.to];
+    if (!from || !to) return;
+    const isActive = activeEdges.some(a => a.from === e.from && a.to === e.to);
+    ctx.beginPath();
+    ctx.strokeStyle = isActive ? '#e8d44d' : '#4a7a42';
+    ctx.lineWidth = isActive ? 3 : 1.5;
+    ctx.setLineDash(e.type === 'conditional' ? [6, 4] : []);
+    ctx.moveTo(from.px, from.py + NODE_H / 2);
+    ctx.lineTo(to.px, to.py - NODE_H / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const mx = (from.px + to.px) / 2;
+    const my = (from.py + NODE_H / 2 + to.py - NODE_H / 2) / 2;
+    if (e.label) {
+      ctx.fillStyle = isActive ? '#e8d44d' : '#5a8a52';
+      ctx.font = '9px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText(e.label, mx, my - 3);
+    }
+
+    const angle = Math.atan2(to.py - NODE_H / 2 - (from.py + NODE_H / 2), to.px - from.px);
+    const ax = to.px - Math.sin(angle) * 2;
+    const ay = to.py - NODE_H / 2;
+    ctx.beginPath();
+    ctx.fillStyle = isActive ? '#e8d44d' : '#4a7a42';
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 5 * Math.cos(angle - 0.4), ay - 5 * Math.sin(angle - 0.4));
+    ctx.lineTo(ax - 5 * Math.cos(angle + 0.4), ay - 5 * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  GRAPH_NODES.forEach(n => {
+    const p = pos[n.id];
+    const state = nodeStates[n.id] || 'idle';
+    let bg, fg, border;
+    if (n.type === 'terminal') {
+      bg = state === 'active' ? '#e8d44d' : state === 'done' ? '#7ab86a' : '#2d5a27';
+      fg = state === 'active' ? '#1e3d1a' : '#e8d44d';
+      border = '#e8d44d';
+    } else {
+      switch (state) {
+        case 'active': bg = '#e8d44d'; fg = '#1e3d1a'; border = '#f0e06e'; break;
+        case 'done': bg = '#3a7a32'; fg = '#7ab86a'; border = '#7ab86a'; break;
+        case 'error': bg = '#7a2020'; fg = '#e8d44d'; border = '#c0392b'; break;
+        default: bg = '#1e3d1a'; fg = '#7ab86a'; border = '#4a7a42'; break;
+      }
+    }
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(p.px - NODE_W / 2, p.py - NODE_H / 2, NODE_W, NODE_H);
+    ctx.strokeStyle = border;
+    ctx.lineWidth = state === 'active' ? 3 : 2;
+    ctx.strokeRect(p.px - NODE_W / 2, p.py - NODE_H / 2, NODE_W, NODE_H);
+
+    if (state === 'active') {
+      ctx.strokeStyle = '#f0e06e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(p.px - NODE_W / 2 - 3, p.py - NODE_H / 2 - 3, NODE_W + 6, NODE_H + 6);
+    }
+
+    ctx.fillStyle = fg;
+    ctx.font = 'bold 11px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.label, p.px, p.py);
+  });
+}
+
+function addMessage(type, text, route) {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg msg-' + type;
+  if (type === 'bot' && route) {
+    let tagClass = 'route-tag';
+    if (route === 'error' || route === 'dead_letter') tagClass += ' error';
+    if (route === 'risky') tagClass += ' risky';
+    div.innerHTML = '<span class="' + tagClass + '">' + route + '</span><br>' + escapeHtml(text);
+  } else if (type === 'system') {
+    div.textContent = text;
+  } else {
+    div.textContent = text;
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addEvent(node, type, message) {
+  const log = document.getElementById('eventLog');
+  const div = document.createElement('div');
+  div.className = 'event-entry';
+  div.innerHTML = '<span class="ev-node">' + node + '</span> ' + type + ': ' + escapeHtml(message);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+function setNodeState(id, state) {
+  nodeStates[id] = state;
+  drawGraph();
+}
+
+function setActiveEdge(from, to) {
+  activeEdges.push({ from, to });
+  drawGraph();
+}
+
+function clearActiveEdges() {
+  activeEdges = [];
+  drawGraph();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('sendBtn');
+  const query = input.value.trim();
+  if (!query) return;
+
+  input.value = '';
+  btn.disabled = true;
+  addMessage('user', query);
+  addMessage('system', 'processing...');
+  resetGraph();
+  document.getElementById('eventLog').innerHTML = '<h3>Event Log</h3>';
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      addMessage('bot', 'Error: ' + data.error, 'error');
+      setNodeState('START', 'error');
+      drawGraph();
+    } else {
+      const steps = data.steps || [];
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        await sleep(400);
+        if (step.from && step.to) {
+          setActiveEdge(step.from, step.to);
+        }
+        if (step.node) {
+          setNodeState(step.node, 'active');
+          drawGraph();
+        }
+        if (step.event) {
+          addEvent(step.event.node, step.event.event_type, step.event.message);
+        }
+        await sleep(300);
+        if (step.node && step.node !== 'END' && step.node !== 'START') {
+          setNodeState(step.node, 'done');
+        }
+        drawGraph();
+      }
+      setNodeState('END', 'done');
+      drawGraph();
+
+      addMessage('bot', data.answer || 'No response generated.', data.route);
+    }
+  } catch (err) {
+    addMessage('bot', 'Connection error: ' + err.message, 'error');
+    setNodeState('START', 'error');
+    drawGraph();
+  }
+
+  btn.disabled = false;
+  document.querySelector('.msg-system:last-child')?.remove();
+  input.focus();
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+document.getElementById('chatInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !document.getElementById('sendBtn').disabled) {
+    sendMessage();
+  }
+});
+
+resetGraph();
+</script>
+</body>
+</html>

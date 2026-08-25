@@ -1,4 +1,4 @@
-.PHONY: install test lint typecheck run-scenarios grade-local clean
+.PHONY: install test lint typecheck run-scenarios grade-local clean web
 
 install:
 	pip install -e '.[dev,openai]'
@@ -20,3 +20,6 @@ grade-local:
 
 clean:
 	rm -rf .pytest_cache .ruff_cache .mypy_cache htmlcov dist build *.egg-info outputs/*.json
+
+web:
+	python -m web
