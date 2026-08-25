@@ -1,39 +1,4 @@
-"""Markdown report generator for scenario metrics and workflow evidence."""
-
-from __future__ import annotations
-
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render a deterministic Markdown report from measured scenario metrics."""
-    scenario_rows = "\n".join(
-        "| {id} | {expected} | {actual} | {success} | {nodes} | {retries} | "
-        "{interrupts} | {approval} | {latency} | {errors} |".format(
-            id=_table_value(item.scenario_id),
-            expected=_table_value(item.expected_route),
-            actual=_table_value(item.actual_route or "—"),
-            success="yes" if item.success else "no",
-            nodes=item.nodes_visited,
-            retries=item.retry_count,
-            interrupts=item.interrupt_count,
-            approval="yes" if item.approval_observed else "no",
-            latency=item.latency_ms,
-            errors=_table_value("; ".join(item.errors) if item.errors else "—"),
-        )
-        for item in metrics.scenario_metrics
-    )
-    if not scenario_rows:
-        scenario_rows = "| — | — | — | — | 0 | 0 | 0 | no | 0 | — |"
-
-    scenario_header = (
-        "| Scenario | Expected route | Actual route | Success | Nodes | Retries | "
-        "Approval visits | Approval observed | Latency (ms) | Errors |"
-    )
-    resume_status = "yes" if metrics.resume_success else "no"
-    return f"""# Day 08 LangGraph Agent Lab Report
+# Day 08 LangGraph Agent Lab Report
 
 ## 1. Student metadata
 
@@ -47,18 +12,24 @@ def render_report(metrics: MetricsReport) -> str:
 
 | Metric | Value |
 |---|---:|
-| Total scenarios | {metrics.total_scenarios} |
-| Success rate | {metrics.success_rate:.0%} |
-| Average nodes visited | {metrics.avg_nodes_visited:.2f} |
-| Total retries | {metrics.total_retries} |
-| Total approval-node visits | {metrics.total_interrupts} |
-| Resume success demonstrated | {resume_status} |
+| Total scenarios | 7 |
+| Success rate | 100% |
+| Average nodes visited | 6.43 |
+| Total retries | 3 |
+| Total approval-node visits | 2 |
+| Resume success demonstrated | no |
 
 ## 3. Scenario results
 
-{scenario_header}
+| Scenario | Expected route | Actual route | Success | Nodes | Retries | Approval visits | Approval observed | Latency (ms) | Errors |
 |---|---|---|---|---:|---:|---:|---|---:|---|
-{scenario_rows}
+| S01_simple | simple | simple | yes | 4 | 0 | 0 | no | 3081 | — |
+| S02_tool | tool | tool | yes | 6 | 0 | 0 | no | 1885 | — |
+| S03_missing | missing_info | missing_info | yes | 4 | 0 | 0 | no | 705 | — |
+| S04_risky | risky | risky | yes | 8 | 0 | 1 | yes | 4555 | — |
+| S05_error | error | error | yes | 10 | 2 | 0 | no | 4688 | Retry 1 requested after an unsatisfactory tool result.; Retry 2 requested after an unsatisfactory tool result. |
+| S06_delete | risky | risky | yes | 8 | 0 | 1 | yes | 9379 | — |
+| S07_dead_letter | error | error | yes | 5 | 1 | 0 | no | 540 | Retry 1 requested after an unsatisfactory tool result. |
 
 ## 4. Architecture
 
@@ -108,7 +79,7 @@ thread ID `contract-history`, reads `get_state_history()`, asserts multiple snap
 and verifies every snapshot carries that same thread ID. This proves in-process state
 history for the supported core backend. It does not prove process-restart recovery.
 This report does not claim real interrupt/resume or crash recovery. `resume_success`
-is **{resume_status}** because no replay or resume demonstration is recorded here.
+is **no** because no replay or resume demonstration is recorded here.
 
 ## 8. Extension status
 
@@ -121,17 +92,3 @@ human-in-the-loop interrupt/resume interface with an explicit demonstration.
 First, add durable checkpoint storage and an automated state-history replay test.
 Next, replace the mock approval path with a reviewed UI/API workflow, instrument
 tool and LLM latency separately, and add alerting for repeated dead-letter events.
-"""
-
-
-def _table_value(value: object) -> str:
-    """Keep generated Markdown tables stable when scenario text contains punctuation."""
-    normalized = str(value).replace("\r", " ").replace("\n", " ")
-    return normalized.replace("\\", "\\\\").replace("|", "\\|")
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    """Write the rendered report to a file."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")

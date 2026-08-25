@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from time import perf_counter
 from typing import Annotated
 
 import typer
 import yaml
+from langchain_core.runnables import RunnableConfig
 
 from .graph import build_graph
 from .metrics import MetricsReport, metric_from_state, summarize_metrics, write_metrics
@@ -32,9 +34,20 @@ def run_scenarios(
     metrics = []
     for scenario in scenarios:
         state = initial_state(scenario)
-        run_config = {"configurable": {"thread_id": state["thread_id"]}}
+        run_config: RunnableConfig = {"configurable": {"thread_id": state["thread_id"]}}
+        started_at = perf_counter()
         final_state = graph.invoke(state, config=run_config)
-        metrics.append(metric_from_state(final_state, scenario.expected_route.value, scenario.requires_approval))
+        latency_ms = round((perf_counter() - started_at) * 1000)
+        # The graph output and its reducer-managed histories remain untouched.  Latency is
+        # instrumentation belonging to the scenario metric, not a workflow state update.
+        measured_state = {**final_state, "latency_ms": latency_ms}
+        metrics.append(
+            metric_from_state(
+                measured_state,
+                scenario.expected_route.value,
+                scenario.requires_approval,
+            )
+        )
     report = summarize_metrics(metrics)
     write_metrics(report, output)
     if cfg.get("report_path"):

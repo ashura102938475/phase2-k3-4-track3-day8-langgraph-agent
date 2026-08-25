@@ -22,7 +22,15 @@ def route_after_classify(state: AgentState) -> str:
 
     Hint: use a dict mapping for clean implementation.
     """
-    raise NotImplementedError("TODO(student): implement route mapping after classify")
+    destinations = {
+        "simple": "answer",
+        "tool": "tool",
+        "missing_info": "clarify",
+        "risky": "risky_action",
+        "error": "retry",
+    }
+    route = state.get("route", "")
+    return destinations.get(route, "answer") if isinstance(route, str) else "answer"
 
 
 def route_after_evaluate(state: AgentState) -> str:
@@ -34,7 +42,7 @@ def route_after_evaluate(state: AgentState) -> str:
     - If evaluation_result == "needs_retry" → "retry"
     - Otherwise → "answer"
     """
-    raise NotImplementedError("TODO(student): implement evaluate routing for retry loop")
+    return "retry" if state.get("evaluation_result") == "needs_retry" else "answer"
 
 
 def route_after_retry(state: AgentState) -> str:
@@ -45,7 +53,15 @@ def route_after_retry(state: AgentState) -> str:
     - If attempt < max_attempts → "tool" (try again)
     - If attempt >= max_attempts → "dead_letter" (give up, escalate)
     """
-    raise NotImplementedError("TODO(student): implement bounded retry routing")
+    # Missing or malformed limits fail closed to the dead-letter path; a retry
+    # router must never accidentally create an unbounded loop.
+    attempt = state.get("attempt")
+    max_attempts = state.get("max_attempts")
+    if not isinstance(attempt, int) or isinstance(attempt, bool):
+        return "dead_letter"
+    if not isinstance(max_attempts, int) or isinstance(max_attempts, bool):
+        return "dead_letter"
+    return "tool" if attempt < max_attempts else "dead_letter"
 
 
 def route_after_approval(state: AgentState) -> str:
@@ -54,4 +70,7 @@ def route_after_approval(state: AgentState) -> str:
     - If approved → "tool" (proceed with risky action)
     - If rejected → "clarify" (ask user for alternative)
     """
-    raise NotImplementedError("TODO(student): implement approval routing")
+    approval = state.get("approval")
+    if isinstance(approval, dict) and approval.get("approved") is True:
+        return "tool"
+    return "clarify"

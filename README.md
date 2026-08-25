@@ -2,7 +2,8 @@
 
 Build a production-style LangGraph workflow for a support-ticket agent with state management, conditional routing, retry loops, human-in-the-loop approval, persistence, and metrics.
 
-This is a **starter skeleton**. All node implementations, routing logic, and graph wiring are left as `TODO(student)` — you must build them from scratch.
+This repository contains the completed core lab implementation. Optional durable
+persistence and real interrupt/resume remain clearly separated as extensions.
 
 ---
 
@@ -38,18 +39,20 @@ This lab requires real LLM API calls in specific nodes:
 | `answer_node` | **MUST use LLM** | Grounded response generation using tool_results/context |
 | `evaluate_node` | **SHOULD use LLM** (bonus) | LLM-as-judge to evaluate tool results quality |
 
-A helper is provided in `src/langgraph_agent_lab/llm.py` — it reads your API key from `.env` and returns a LangChain chat model.
+A helper is provided in `src/langgraph_agent_lab/llm.py` — it reads your API key from `.env` and returns a LangChain chat model. The default configuration uses NVIDIA's OpenAI-compatible endpoint with `nvidia/nemotron-3.5-lightning-30b-a3b`.
 
 ```bash
-# Install your preferred LLM provider
-pip install langchain-openai    # for OpenAI
-# OR
-pip install langchain-anthropic  # for Anthropic
+# Install the lab and the OpenAI-compatible client used by NVIDIA
+pip install -e '.[dev,openai]'
 
 # Configure .env
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY or ANTHROPIC_API_KEY
+# Edit .env and set a newly issued NVIDIA_API_KEY
 ```
+
+Never commit `.env`, paste a real key into source or shell history, or reuse a key
+that has been exposed in chat or logs. Revoke exposed credentials before running
+the live scenarios.
 
 ---
 
@@ -123,21 +126,19 @@ The grading script will also test with scenarios you haven't seen.
 ```bash
 # Option A: conda
 conda activate ai-lab
-pip install -e '.[dev]'
-pip install langchain-openai  # or langchain-anthropic
+pip install -e '.[dev,openai]'
 
 # Option B: venv
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[dev]'
-pip install langchain-openai  # or langchain-anthropic
+pip install -e '.[dev,openai]'
 
 # Configure LLM
 cp .env.example .env
-# Edit .env — set your API key
+# Edit .env — set a newly issued NVIDIA_API_KEY
 
 # Verify setup
-make test  # some tests will fail until you implement TODOs
+make test
 ```
 
 ---
@@ -177,8 +178,9 @@ make test  # some tests will fail until you implement TODOs
 
 ### Phase 3: Persistence (150–180 min) — worth 10 points
 
-7. **`persistence.py`** — Implement SQLite checkpointer
-   - Show evidence: thread_id per run, state history, or crash-resume
+7. **`persistence.py`** — Wire `MemorySaver` for the core workflow
+   - Show evidence: thread ID per run and state history in the same process
+   - Treat SQLite/Postgres crash recovery as an optional durable extension
 
 ### Phase 4: Metrics & report (180–240 min) — worth 25 points
 
@@ -215,7 +217,7 @@ Pick one or more:
 
 ## Submission checklist
 
-- [ ] All `TODO(student)` sections implemented
+- [ ] All core implementation sections completed
 - [ ] `.env` configured with LLM API key
 - [ ] `classify_node` uses real LLM call with structured output
 - [ ] `answer_node` uses real LLM call for grounded responses

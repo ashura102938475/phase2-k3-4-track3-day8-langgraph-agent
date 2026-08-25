@@ -21,6 +21,9 @@ env/
 # Environment
 .env
 
+# Local agent session logs may contain prompts or credentials
+.ai-log/
+
 # Persistence
 checkpoints.db
 checkpoints.db-wal

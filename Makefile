@@ -1,7 +1,7 @@
 .PHONY: install test lint typecheck run-scenarios grade-local clean
 
 install:
-	pip install -e '.[dev]'
+	pip install -e '.[dev,openai]'
 
 test:
 	pytest

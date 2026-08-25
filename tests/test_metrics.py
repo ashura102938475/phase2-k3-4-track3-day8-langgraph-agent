@@ -2,7 +2,7 @@ from langgraph_agent_lab.metrics import metric_from_state, summarize_metrics
 from langgraph_agent_lab.state import make_event
 
 
-def test_metric_from_state_success():
+def test_metric_from_state_success() -> None:
     state = {
         "scenario_id": "S",
         "route": "simple",
@@ -16,7 +16,7 @@ def test_metric_from_state_success():
     assert metric.nodes_visited == 2
 
 
-def test_metric_from_state_route_mismatch():
+def test_metric_from_state_route_mismatch() -> None:
     state = {
         "scenario_id": "S",
         "route": "tool",
@@ -29,7 +29,23 @@ def test_metric_from_state_route_mismatch():
     assert metric.success is False
 
 
-def test_summarize_metrics():
+def test_metric_from_state_preserves_measured_latency() -> None:
+    state = {
+        "scenario_id": "measured",
+        "route": "simple",
+        "final_answer": "ok",
+        "latency_ms": 137,
+        "events": [],
+        "errors": [],
+        "approval": None,
+    }
+
+    metric = metric_from_state(state, expected_route="simple", approval_required=False)
+
+    assert metric.latency_ms == 137
+
+
+def test_summarize_metrics() -> None:
     m1 = metric_from_state(
         {"scenario_id": "1", "route": "simple", "final_answer": "ok", "events": [], "errors": [], "approval": None},
         "simple",
