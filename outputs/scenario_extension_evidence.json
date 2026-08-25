@@ -1,0 +1,14 @@
+{
+  "llm_as_judge": {
+    "enabled": true,
+    "llm_event_count": 5,
+    "fallback_event_count": 3,
+    "policy_guard_event_count": 1
+  },
+  "parallel_fanout": {
+    "scenario_count": 1,
+    "configured_task_count": 2,
+    "tool_event_count": 6,
+    "deterministic_result_count": 2
+  }
+}

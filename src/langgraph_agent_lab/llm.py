@@ -7,6 +7,7 @@ Students should use this helper so the lab works with any supported provider.
 from __future__ import annotations
 
 import os
+from typing import Any
 from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
@@ -60,6 +61,9 @@ def _openai_llm(
     model: str,
     temperature: float,
     base_url: str | None = None,
+    timeout: float | None = None,
+    max_retries: int | None = None,
+    max_tokens: int | None = None,
 ) -> BaseChatModel:
     """Construct a standard OpenAI-compatible chat model."""
     try:
@@ -67,41 +71,77 @@ def _openai_llm(
     except ImportError as exc:
         raise RuntimeError("Install: pip install langchain-openai") from exc
 
-    if base_url is None:
-        return ChatOpenAI(model=model, api_key=SecretStr(api_key), temperature=temperature)
-    return ChatOpenAI(
-        model=model,
-        api_key=SecretStr(api_key),
-        temperature=temperature,
-        base_url=base_url,
-    )
+    options: dict[str, Any] = {
+        "model": model,
+        "api_key": SecretStr(api_key),
+        "temperature": temperature,
+    }
+    if base_url is not None:
+        options["base_url"] = base_url
+    if timeout is not None:
+        options["timeout"] = timeout
+    if max_retries is not None:
+        options["max_retries"] = max_retries
+    if max_tokens is not None:
+        options["max_completion_tokens"] = max_tokens
+    return ChatOpenAI(**options)
 
 
-def _nvidia_llm(*, api_key: str, model: str, temperature: float) -> BaseChatModel:
+def _nvidia_llm(
+    *,
+    api_key: str,
+    model: str,
+    temperature: float,
+    timeout: float | None = None,
+    max_retries: int | None = None,
+    max_tokens: int | None = None,
+) -> BaseChatModel:
     """Construct the NVIDIA client with its canonical hosted endpoint."""
     try:
         from langchain_openai import ChatOpenAI
     except ImportError as exc:
         raise RuntimeError("Install: pip install langchain-openai") from exc
 
-    return ChatOpenAI(
-        model=model,
-        api_key=SecretStr(api_key),
-        temperature=temperature,
-        base_url=NVIDIA_BASE_URL,
-        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
-    )
+    options: dict[str, Any] = {
+        "model": model,
+        "api_key": SecretStr(api_key),
+        "temperature": temperature,
+        "base_url": NVIDIA_BASE_URL,
+        "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+    }
+    if timeout is not None:
+        options["timeout"] = timeout
+    if max_retries is not None:
+        options["max_retries"] = max_retries
+    if max_tokens is not None:
+        options["max_completion_tokens"] = max_tokens
+    return ChatOpenAI(**options)
 
 
-def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel:
+def get_llm(
+    model: str | None = None,
+    temperature: float = 0.0,
+    *,
+    timeout: float | None = None,
+    max_retries: int | None = None,
+    max_tokens: int | None = None,
+) -> BaseChatModel:
     """Create an LLM client from environment configuration.
 
     ``NVIDIA_API_KEY`` wins over all other provider credentials and is always
     sent to NVIDIA's canonical hosted endpoint. ``OPENAI_API_KEY`` is treated
     as NVIDIA credentials only when ``OPENAI_BASE_URL`` is that exact endpoint.
     An explicit model argument has precedence over ``LLM_MODEL`` for every
-    provider.
+    provider. Optional runtime limits are translated to each adapter's native
+    constructor names.
     """
+    if timeout is not None and timeout <= 0:
+        raise ValueError("timeout must be positive")
+    if max_retries is not None and max_retries < 0:
+        raise ValueError("max_retries must be non-negative")
+    if max_tokens is not None and max_tokens <= 0:
+        raise ValueError("max_tokens must be positive")
+
     nvidia_key = os.getenv("NVIDIA_API_KEY")
     configured_model = model or os.getenv("LLM_MODEL")
     if nvidia_key:
@@ -109,6 +149,9 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             api_key=nvidia_key,
             model=configured_model or NVIDIA_MODEL,
             temperature=temperature,
+            timeout=timeout,
+            max_retries=max_retries,
+            max_tokens=max_tokens,
         )
 
     if os.getenv("GEMINI_API_KEY"):
@@ -118,11 +161,18 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             )
         except ImportError as exc:
             raise RuntimeError("Install: pip install langchain-google-genai") from exc
-        return ChatGoogleGenerativeAI(
-            model=configured_model or "gemini-2.5-flash",
-            google_api_key=os.getenv("GEMINI_API_KEY"),
-            temperature=temperature,
-        )
+        options: dict[str, Any] = {
+            "model": configured_model or "gemini-2.5-flash",
+            "google_api_key": os.getenv("GEMINI_API_KEY"),
+            "temperature": temperature,
+        }
+        if timeout is not None:
+            options["request_timeout"] = timeout
+        if max_retries is not None:
+            options["retries"] = max_retries
+        if max_tokens is not None:
+            options["max_tokens"] = max_tokens
+        return ChatGoogleGenerativeAI(**options)
 
     openai_key = os.getenv("OPENAI_API_KEY")
     base_url = os.getenv("OPENAI_BASE_URL")
@@ -131,6 +181,9 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             api_key=openai_key,
             model=configured_model or NVIDIA_MODEL,
             temperature=temperature,
+            timeout=timeout,
+            max_retries=max_retries,
+            max_tokens=max_tokens,
         )
 
     if openai_key:
@@ -139,6 +192,9 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             model=configured_model or "gpt-4o-mini",
             temperature=temperature,
             base_url=base_url,
+            timeout=timeout,
+            max_retries=max_retries,
+            max_tokens=max_tokens,
         )
 
     if os.getenv("ANTHROPIC_API_KEY"):
@@ -146,10 +202,17 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             from langchain_anthropic import ChatAnthropic  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError("Install: pip install langchain-anthropic") from exc
-        return ChatAnthropic(
-            model=configured_model or "claude-sonnet-4-20250514",
-            temperature=temperature,
-        )
+        options = {
+            "model": configured_model or "claude-sonnet-4-20250514",
+            "temperature": temperature,
+        }
+        if timeout is not None:
+            options["timeout"] = timeout
+        if max_retries is not None:
+            options["max_retries"] = max_retries
+        if max_tokens is not None:
+            options["max_tokens"] = max_tokens
+        return ChatAnthropic(**options)
 
     raise RuntimeError(
         "No LLM API key found. Set NVIDIA_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, or "

@@ -24,10 +24,16 @@ env/
 # Local agent session logs may contain prompts or credentials
 .ai-log/
 
+# Local code-graph analysis is not submission material
+graphify-out/
+
 # Persistence
 checkpoints.db
 checkpoints.db-wal
 checkpoints.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 # Testing
 .pytest_cache/

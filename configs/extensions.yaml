@@ -1,0 +1,7 @@
+scenarios_path: data/extensions/scenarios.jsonl
+checkpointer: memory
+audit_path: outputs/extension_audit_events.jsonl
+persistence_evidence_path: outputs/extension_persistence_evidence.json
+scenario_extension_evidence_path: outputs/scenario_extension_evidence.json
+extensions:
+  llm_as_judge: true

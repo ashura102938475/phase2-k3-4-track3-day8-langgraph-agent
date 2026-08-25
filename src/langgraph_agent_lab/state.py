@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from operator import add
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, NotRequired, TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -38,6 +38,43 @@ class ApprovalDecision(BaseModel):
     comment: str = ""
 
 
+class ParallelToolResult(TypedDict):
+    """Serializable result emitted by one parallel tool branch."""
+
+    task: str
+    result: str
+    attempt: NotRequired[int]
+
+
+def merge_parallel_tool_results(
+    left: list[ParallelToolResult], right: list[ParallelToolResult]
+) -> list[ParallelToolResult]:
+    """Merge branch results in a deterministic, associative, commutative form.
+
+    Malformed entries are ignored at this trust boundary. Exact duplicates collapse,
+    which also makes replaying a checkpoint idempotent.
+    """
+    normalized: dict[str, tuple[tuple[int, str, bool], ParallelToolResult]] = {}
+    for item in [*left, *right]:
+        if not isinstance(item, dict):
+            continue
+        task = item.get("task")
+        result = item.get("result")
+        attempt = item.get("attempt", 0)
+        if not isinstance(attempt, int) or isinstance(attempt, bool) or attempt < 0:
+            continue
+        if isinstance(task, str) and task.strip() and isinstance(result, str):
+            has_attempt = "attempt" in item
+            candidate: ParallelToolResult = {"task": task, "result": result}
+            if has_attempt:
+                candidate["attempt"] = attempt
+            rank = (attempt, result, has_attempt)
+            current = normalized.get(task)
+            if current is None or rank > current[0]:
+                normalized[task] = (rank, candidate)
+    return [normalized[task][1] for task in sorted(normalized)]
+
+
 class AgentState(TypedDict, total=False):
     """LangGraph state.
 
@@ -56,9 +93,17 @@ class AgentState(TypedDict, total=False):
     # each node update.  Keep approval as a plain mapping so checkpoints remain
     # JSON-serializable (rather than storing a Pydantic model instance).
     evaluation_result: str | None
+    evaluation_reason: str | None
+    evaluation_source: str | None
+    judge_calls: int
     pending_question: str | None
     proposed_action: str | None
     approval: dict[str, Any] | None
+    tool_tasks: list[str]
+    active_tool_task: str | None
+    parallel_tool_results: Annotated[
+        list[ParallelToolResult], merge_parallel_tool_results
+    ]
     messages: Annotated[list[str], add]
     tool_results: Annotated[list[str], add]
     errors: Annotated[list[str], add]
@@ -73,6 +118,7 @@ class Scenario(BaseModel):
     should_retry: bool = False
     max_attempts: int = 3
     tags: list[str] = Field(default_factory=list)
+    tool_tasks: list[str] = Field(default_factory=list, max_length=4)
 
     @field_validator("query")
     @classmethod
@@ -80,6 +126,16 @@ class Scenario(BaseModel):
         if not value.strip():
             raise ValueError("query must not be empty")
         return value
+
+    @field_validator("tool_tasks")
+    @classmethod
+    def tool_tasks_must_be_non_empty_and_unique(cls, value: list[str]) -> list[str]:
+        normalized = [task.strip() for task in value]
+        if any(not task for task in normalized):
+            raise ValueError("tool tasks must not be empty")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("tool tasks must be unique")
+        return normalized
 
 
 def initial_state(scenario: Scenario) -> AgentState:
@@ -94,9 +150,15 @@ def initial_state(scenario: Scenario) -> AgentState:
         "max_attempts": scenario.max_attempts,
         "final_answer": None,
         "evaluation_result": None,
+        "evaluation_reason": None,
+        "evaluation_source": None,
+        "judge_calls": 0,
         "pending_question": None,
         "proposed_action": None,
         "approval": None,
+        "tool_tasks": list(scenario.tool_tasks),
+        "active_tool_task": None,
+        "parallel_tool_results": [],
         "messages": [],
         "tool_results": [],
         "errors": [],

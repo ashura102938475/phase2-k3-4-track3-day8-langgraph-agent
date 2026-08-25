@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
+
 from langgraph_agent_lab.metrics import MetricsReport, ScenarioMetric
-from langgraph_agent_lab.report import render_report
+from langgraph_agent_lab.report import render_report, write_report
 
 
 def _metrics() -> MetricsReport:
@@ -85,3 +89,80 @@ def test_render_report_escapes_control_characters_and_markdown_pipes() -> None:
 
     assert "\r" not in report
     assert r"a\\\|b  c" in report
+
+
+def test_write_report_refreshes_metrics_without_overwriting_submission_narrative(
+    tmp_path: Path,
+) -> None:
+    report_path = tmp_path / "lab_report.md"
+    report_path.write_text(
+        """# Final submission
+
+Student: A Student
+
+<!-- BEGIN GENERATED:METRICS_SUMMARY -->
+obsolete summary
+<!-- END GENERATED:METRICS_SUMMARY -->
+
+<!-- BEGIN GENERATED:SCENARIO_RESULTS -->
+obsolete scenario row
+<!-- END GENERATED:SCENARIO_RESULTS -->
+
+Failure evidence: keep this exact narrative.
+""",
+        encoding="utf-8",
+    )
+
+    write_report(_metrics(), report_path)
+
+    updated = report_path.read_text(encoding="utf-8")
+    assert "Student: A Student" in updated
+    assert "Failure evidence: keep this exact narrative." in updated
+    assert "obsolete summary" not in updated
+    assert "obsolete scenario row" not in updated
+    assert "Total scenarios | 2" in updated
+    assert "simple-1" in updated and "risky-2" in updated
+
+
+def test_write_report_adds_generated_blocks_without_overwriting_unmarked_report(
+    tmp_path: Path,
+) -> None:
+    report_path = tmp_path / "lab_report.md"
+    original = "# Final submission\r\n\r\nFailure evidence: preserve these bytes.\r\n"
+    report_path.write_bytes(original.encode("utf-8"))
+
+    write_report(_metrics(), report_path)
+
+    updated = report_path.read_bytes().decode("utf-8")
+    assert updated.startswith(original)
+    assert updated.count("<!-- BEGIN GENERATED:METRICS_SUMMARY -->") == 1
+    assert updated.count("<!-- BEGIN GENERATED:SCENARIO_RESULTS -->") == 1
+    assert "Total scenarios | 2" in updated
+
+
+@pytest.mark.parametrize(
+    "broken_markers",
+    [
+        "<!-- BEGIN GENERATED:METRICS_SUMMARY -->",
+        """<!-- END GENERATED:METRICS_SUMMARY -->
+<!-- BEGIN GENERATED:METRICS_SUMMARY -->""",
+        """<!-- BEGIN GENERATED:METRICS_SUMMARY -->
+<!-- END GENERATED:METRICS_SUMMARY -->
+<!-- BEGIN GENERATED:METRICS_SUMMARY -->
+<!-- END GENERATED:METRICS_SUMMARY -->
+<!-- BEGIN GENERATED:SCENARIO_RESULTS -->
+<!-- END GENERATED:SCENARIO_RESULTS -->""",
+    ],
+)
+def test_write_report_rejects_malformed_markers_without_changing_file(
+    tmp_path: Path,
+    broken_markers: str,
+) -> None:
+    report_path = tmp_path / "lab_report.md"
+    original = f"# Final submission\n\n{broken_markers}\n\nKeep this narrative.\n"
+    report_path.write_text(original, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="generated-block markers"):
+        write_report(_metrics(), report_path)
+
+    assert report_path.read_text(encoding="utf-8") == original

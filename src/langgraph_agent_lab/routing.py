@@ -1,15 +1,37 @@
 """Routing functions for conditional edges.
 
-Each function takes AgentState and returns a string — the name of the next node.
-These strings MUST match node names registered in graph.py.
+Core routes return the next registered node name. The optional parallel lookup
+extension returns LangGraph ``Send`` objects to the existing tool node.
 """
 
 from __future__ import annotations
 
+from langgraph.types import Send
+
 from .state import AgentState
 
 
-def route_after_classify(state: AgentState) -> str:
+def _parallel_tool_sends(state: AgentState) -> list[Send] | None:
+    """Create deterministic tool branches for explicitly independent tasks."""
+    if state.get("route") == "risky":
+        return None
+    raw_tasks = state.get("tool_tasks")
+    if not isinstance(raw_tasks, list):
+        return None
+    tasks = sorted(
+        task.strip() for task in raw_tasks if isinstance(task, str) and task.strip()
+    )
+    if len(tasks) <= 1:
+        return None
+    shared = {
+        key: state[key]
+        for key in ("query", "route", "attempt", "max_attempts")
+        if key in state
+    }
+    return [Send("tool", {**shared, "active_tool_task": task}) for task in tasks]
+
+
+def route_after_classify(state: AgentState) -> str | list[Send]:
     """Map classified route to the next graph node.
 
     Mapping:
@@ -30,6 +52,8 @@ def route_after_classify(state: AgentState) -> str:
         "error": "retry",
     }
     route = state.get("route", "")
+    if route == "tool" and (sends := _parallel_tool_sends(state)) is not None:
+        return sends
     return destinations.get(route, "answer") if isinstance(route, str) else "answer"
 
 
@@ -45,7 +69,7 @@ def route_after_evaluate(state: AgentState) -> str:
     return "retry" if state.get("evaluation_result") == "needs_retry" else "answer"
 
 
-def route_after_retry(state: AgentState) -> str:
+def route_after_retry(state: AgentState) -> str | list[Send]:
     """Decide whether to retry the tool or give up.
 
     MUST be bounded — unbounded retry loops will fail grading.
@@ -61,7 +85,9 @@ def route_after_retry(state: AgentState) -> str:
         return "dead_letter"
     if not isinstance(max_attempts, int) or isinstance(max_attempts, bool):
         return "dead_letter"
-    return "tool" if attempt < max_attempts else "dead_letter"
+    if attempt >= max_attempts:
+        return "dead_letter"
+    return _parallel_tool_sends(state) or "tool"
 
 
 def route_after_approval(state: AgentState) -> str:

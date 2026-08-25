@@ -95,6 +95,14 @@ def test_evaluate_sets_retry_gate_from_latest_tool_result(result: str, expected:
     assert update.keys() == {"evaluation_result", "events"}
 
 
+def test_evaluate_ignores_recovered_transient_error_history() -> None:
+    update = nodes.evaluate_node(
+        {"tool_results": ["ERROR: transient outage", "tool result: recovered"], "events": []}
+    )
+
+    assert update["evaluation_result"] == "success"
+
+
 def test_retry_increments_attempt_and_logs_error() -> None:
     update = nodes.retry_or_fallback_node({"attempt": 1, "errors": [], "events": []})
 
@@ -168,7 +176,9 @@ def test_approval_defaults_to_mock_approved_decision(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("LANGGRAPH_INTERRUPT", raising=False)
-    update = nodes.approval_node({"proposed_action": "delete production data", "events": []})
+    update = nodes.approval_node(
+        {"proposed_action": "delete production data", "events": []},
+    )
 
     assert update["approval"]["approved"] is True
     assert update["approval"]["reviewer"]

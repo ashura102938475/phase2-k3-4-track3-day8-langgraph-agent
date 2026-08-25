@@ -1,9 +1,12 @@
-# Day 08 Lab — LangGraph Agentic Orchestration
+# Day 23 — Track 3 — LangGraph Agentic Orchestration
 
 Build a production-style LangGraph workflow for a support-ticket agent with state management, conditional routing, retry loops, human-in-the-loop approval, persistence, and metrics.
 
-This repository contains the completed core lab implementation. Optional durable
-persistence and real interrupt/resume remain clearly separated as extensions.
+This repository contains the completed core lab plus opt-in extensions for a bounded
+LLM judge, real interrupt/resume, durable SQLite/Postgres checkpoints, controlled time
+travel, deterministic `Send()` fan-out, a Streamlit reviewer UI, and Mermaid export.
+The default graph remains the required 11-node workflow; interactive and durable paths
+stay isolated from the offline core test contract.
 
 ---
 
@@ -44,6 +47,9 @@ A helper is provided in `src/langgraph_agent_lab/llm.py` — it reads your API k
 ```bash
 # Install the lab and the OpenAI-compatible client used by NVIDIA
 pip install -e '.[dev,openai]'
+
+# Optional extension dependencies
+pip install -e '.[dev,openai,sqlite,ui]'
 
 # Configure .env
 cp .env.example .env
@@ -206,12 +212,38 @@ Pick one or more:
 | Command | What it does |
 |---|---|
 | `make install` | Install project + dev dependencies |
+| `make install-extensions` | Install all tested optional-extension dependencies |
 | `make test` | Run pytest |
+| `make test-extensions` | Run all optional-extension contract tests |
+| `make extensions` | Run extension tests and export the compiled graph |
 | `make lint` | Run ruff linter |
 | `make typecheck` | Run mypy type checker |
-| `make run-scenarios` | Execute all scenarios → `outputs/metrics.json` |
+| `make run-scenarios` | Execute the unchanged core scenarios → `outputs/metrics.json` |
+| `make run-extension-scenarios` | Run judge/fan-out opt-ins → extension-specific outputs |
 | `make grade-local` | Validate metrics.json schema |
+| `make export-graph` | Export the compiled graph → `outputs/graph.mmd` |
+| `make prove-hitl` | Run a live reject/resume cycle → `outputs/hitl_evidence.json` |
+| `make streamlit` | Start the reviewer UI (requires the `ui` extra) |
 | `make clean` | Remove caches and generated files |
+
+---
+
+## Verified extensions
+
+| Extension | Opt-in boundary | Proof |
+|---|---|---|
+| LLM-as-judge | `extensions.llm_as_judge` in `configs/extensions.yaml` | Structured verdict, policy guard, fallback, and cost-guard tests plus scenario events |
+| Real HITL | `HitlRunner` sets `approval_mode=interrupt` | Same-thread approve/reject tests using a real LangGraph interrupt |
+| Durable recovery | `open_checkpointer("sqlite", absolute_path)` | Abrupt child exit, fresh connection, and keyed resume test |
+| Time travel | Checkpoint select/replay/fork helpers | Stable-ID selection, guarded replay, and reviewable-content-only fork tests |
+| Parallel fan-out | More than one read-only `Scenario.tool_tasks` entry in the extension dataset | Real `Send()` branches and deterministic reducer test; extension S02 runtime proof |
+| Streamlit | `apps/streamlit_app.py` | Allowlisted display and interrupt-bound start/reject/resume UI tests |
+| Mermaid | `make export-graph` | `outputs/graph.mmd` generated from `compiled.get_graph()` |
+
+Checkpoint databases can contain raw ticket and tool state. They are ignored by Git and
+need production retention, access control, encryption, and schema/version policies.
+Scenario audit files are a separate metadata-only projection: they omit messages and raw task
+text, retain trusted scenario/thread provenance, and use stable task fingerprints.
 
 ---
 

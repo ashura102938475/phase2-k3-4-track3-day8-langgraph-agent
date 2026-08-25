@@ -1,0 +1,21 @@
+{
+  "thread_id": "hitl-6e0395054e1f43769d5f2009f8431d8c",
+  "same_thread_resumed": true,
+  "interrupt_observed": true,
+  "decision": "rejected",
+  "pending_event_nodes": [
+    "intake",
+    "classify",
+    "risky_action"
+  ],
+  "resumed_event_nodes": [
+    "intake",
+    "classify",
+    "risky_action",
+    "approval",
+    "clarify",
+    "finalize"
+  ],
+  "tool_called": false,
+  "terminal": true
+}

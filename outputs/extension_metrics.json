@@ -1,8 +1,8 @@
 {
   "total_scenarios": 7,
   "success_rate": 1.0,
-  "avg_nodes_visited": 6.428571428571429,
-  "total_retries": 3,
+  "avg_nodes_visited": 8.714285714285714,
+  "total_retries": 8,
   "total_interrupts": 2,
   "resume_success": false,
   "scenario_metrics": [
@@ -16,7 +16,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 22602,
+      "latency_ms": 43363,
       "errors": []
     },
     {
@@ -24,13 +24,16 @@
       "success": true,
       "expected_route": "tool",
       "actual_route": "tool",
-      "nodes_visited": 6,
-      "retry_count": 0,
+      "nodes_visited": 15,
+      "retry_count": 2,
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 2804,
-      "errors": []
+      "latency_ms": 6629,
+      "errors": [
+        "Retry 1 requested after an unsatisfactory tool result.",
+        "Retry 2 requested after an unsatisfactory tool result."
+      ]
     },
     {
       "scenario_id": "S03_missing",
@@ -42,7 +45,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 578,
+      "latency_ms": 523,
       "errors": []
     },
     {
@@ -50,28 +53,32 @@
       "success": true,
       "expected_route": "risky",
       "actual_route": "risky",
-      "nodes_visited": 8,
-      "retry_count": 0,
+      "nodes_visited": 14,
+      "retry_count": 2,
       "interrupt_count": 1,
       "approval_required": true,
       "approval_observed": true,
-      "latency_ms": 4745,
-      "errors": []
+      "latency_ms": 8021,
+      "errors": [
+        "Retry 1 requested after an unsatisfactory tool result.",
+        "Retry 2 requested after an unsatisfactory tool result."
+      ]
     },
     {
       "scenario_id": "S05_error",
       "success": true,
       "expected_route": "error",
       "actual_route": "error",
-      "nodes_visited": 10,
-      "retry_count": 2,
+      "nodes_visited": 11,
+      "retry_count": 3,
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 31012,
+      "latency_ms": 1760,
       "errors": [
         "Retry 1 requested after an unsatisfactory tool result.",
-        "Retry 2 requested after an unsatisfactory tool result."
+        "Retry 2 requested after an unsatisfactory tool result.",
+        "Retry 3 requested after an unsatisfactory tool result."
       ]
     },
     {
@@ -84,7 +91,7 @@
       "interrupt_count": 1,
       "approval_required": true,
       "approval_observed": true,
-      "latency_ms": 6414,
+      "latency_ms": 14772,
       "errors": []
     },
     {
@@ -97,7 +104,7 @@
       "interrupt_count": 0,
       "approval_required": false,
       "approval_observed": false,
-      "latency_ms": 3336,
+      "latency_ms": 39784,
       "errors": [
         "Retry 1 requested after an unsatisfactory tool result."
       ]

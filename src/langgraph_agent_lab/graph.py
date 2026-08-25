@@ -15,9 +15,10 @@ if TYPE_CHECKING:
     from langgraph.types import Checkpointer
 
 
-def build_graph(checkpointer: Checkpointer = None) -> CompiledStateGraph:
-    """Build and compile the LangGraph workflow.
-    """
+def build_graph(
+    checkpointer: Checkpointer = None, *, use_llm_judge: bool = False
+) -> CompiledStateGraph:
+    """Build the 11-node workflow, optionally replacing only its evaluator."""
     from langgraph.graph import END, START, StateGraph
 
     # Import modules rather than binding functions at module import time.  This keeps the
@@ -29,7 +30,8 @@ def build_graph(checkpointer: Checkpointer = None) -> CompiledStateGraph:
     workflow.add_node("classify", nodes.classify_node)
     workflow.add_node("answer", nodes.answer_node)
     workflow.add_node("tool", nodes.tool_node)
-    workflow.add_node("evaluate", nodes.evaluate_node)
+    evaluator = nodes.llm_evaluate_node if use_llm_judge else nodes.evaluate_node
+    workflow.add_node("evaluate", evaluator)
     workflow.add_node("clarify", nodes.ask_clarification_node)
     workflow.add_node("risky_action", nodes.risky_action_node)
     workflow.add_node("approval", nodes.approval_node)

@@ -6,8 +6,10 @@ from pathlib import Path
 
 from .metrics import MetricsReport
 
+_GENERATED_BLOCK_NAMES = ("METRICS_SUMMARY", "SCENARIO_RESULTS")
 
-def render_report(metrics: MetricsReport) -> str:
+
+def render_report(metrics: MetricsReport, existing_report: str | None = None) -> str:
     """Render a deterministic Markdown report from measured scenario metrics."""
     scenario_rows = "\n".join(
         "| {id} | {expected} | {actual} | {success} | {nodes} | {retries} | "
@@ -33,37 +35,57 @@ def render_report(metrics: MetricsReport) -> str:
         "Approval visits | Approval observed | Latency (ms) | Errors |"
     )
     resume_status = "yes" if metrics.resume_success else "no"
-    return f"""# Day 08 LangGraph Agent Lab Report
-
-## 1. Student metadata
-
-| Field | Value |
-|---|---|
-| Name | [Student name] |
-| Repository / commit | [Repository URL or commit] |
-| Date | [YYYY-MM-DD] |
-
-## 2. Metrics summary
-
-| Metric | Value |
+    metrics_summary = f"""| Metric | Value |
 |---|---:|
 | Total scenarios | {metrics.total_scenarios} |
 | Success rate | {metrics.success_rate:.0%} |
 | Average nodes visited | {metrics.avg_nodes_visited:.2f} |
 | Total retries | {metrics.total_retries} |
 | Total approval-node visits | {metrics.total_interrupts} |
-| Resume success demonstrated | {resume_status} |
+| Resume success demonstrated | {resume_status} |"""
+    scenario_results = f"""{scenario_header}
+|---|---|---|---|---:|---:|---:|---|---:|---|
+{scenario_rows}"""
+
+    if existing_report is not None:
+        has_generated_blocks = _validate_generated_blocks(existing_report)
+        if has_generated_blocks:
+            refreshed = _replace_generated_block(
+                existing_report, "METRICS_SUMMARY", metrics_summary
+            )
+            return _replace_generated_block(refreshed, "SCENARIO_RESULTS", scenario_results)
+        if existing_report:
+            return _append_generated_blocks(
+                existing_report, metrics_summary, scenario_results
+            )
+
+    return f"""# Day 23 — Track 3 — LangGraph Agentic Orchestration Lab Report
+
+## 1. Student metadata
+
+| Field | Value |
+|---|---|
+| Name | [Student name] |
+| Student ID | [Student ID] |
+| Repository / commit | [Repository URL or commit] |
+| Date | [YYYY-MM-DD] |
+
+## 2. Metrics summary
+
+<!-- BEGIN GENERATED:METRICS_SUMMARY -->
+{metrics_summary}
+<!-- END GENERATED:METRICS_SUMMARY -->
 
 ## 3. Scenario results
 
-{scenario_header}
-|---|---|---|---|---:|---:|---:|---|---:|---|
-{scenario_rows}
+<!-- BEGIN GENERATED:SCENARIO_RESULTS -->
+{scenario_results}
+<!-- END GENERATED:SCENARIO_RESULTS -->
 
-The CLI also emits the complete reducer-backed audit event stream to
+The CLI also emits a metadata-only projection of the reducer-backed event stream to
 `outputs/audit_events.jsonl` and the per-thread checkpoint history proof to
-`outputs/persistence_evidence.json`. These artifacts are the inspectable evidence
-behind the node, retry, approval, and persistence claims above.
+`outputs/persistence_evidence.json`. The projection omits messages and raw task text;
+these artifacts still provide inspectable route, retry, approval, and persistence evidence.
 
 ## 4. Architecture
 
@@ -78,28 +100,36 @@ classification.
 
 ## 5. State and reducers
 
-`query`, `route`, `risk_level`, `attempt`, `max_attempts`, `evaluation_result`,
-`pending_question`, `proposed_action`, `approval`, and `final_answer` are overwrite
-fields: each represents the current workflow fact. `messages`, `tool_results`,
-`errors`, and `events` use the list-add reducer, so every node contributes an
-append-only audit/history entry instead of replacing prior evidence. This reducer
-choice makes node counts, retries, approval visits, and failure details measurable.
+`thread_id`, `scenario_id`, `query`, `route`, `risk_level`, `attempt`, `max_attempts`,
+`evaluation_result`, `evaluation_reason`, `evaluation_source`, `judge_calls`,
+`pending_question`, `proposed_action`, `approval`, `tool_tasks`, `active_tool_task`, and
+`final_answer` are overwrite fields: each represents the current workflow fact.
+`parallel_tool_results` uses a deterministic custom reducer that retains the highest
+attempt per task in canonical order.
+`messages`, `tool_results`, `errors`, and `events` use the list-add reducer, so every
+node contributes an append-only audit/history entry instead of replacing prior
+evidence. This reducer choice makes node counts, retries, approval visits, and failure
+details measurable.
 
 ## 6. Failure analysis
 
-1. **Tool retry and dead-letter.** When evaluation sees an error result, it sends
-   the run to `retry`. The bounded retry map compares `attempt` with
-   `max_attempts`; exhausted runs go to `dead_letter`, produce an explanatory final
-   answer, and still finalize. This prevents an unbounded tool loop while retaining
-   the errors and retry events used by the metrics.
-2. **Risky approval rejection.** A risky request first creates a proposed action
-   and reaches `approval`. A rejected or missing approval routes to `clarify`, not
-   the tool, so no risky operation is executed. The resulting clarification and
-   approval evidence make the rejection visible rather than reporting a false
-   successful action. When the expected route, output/clarification, and approval
-   gate contracts hold, that rejection is a **safe workflow completion**. It does not mean
-   the risky action was approved or executed; it means the workflow safely
-   stopped the action and returned a user-facing next step.
+1. **Tool retry and dead-letter.** The failure starts when classification selects
+   `error`, or when `tool_results[-1]` contains `ERROR`. The `route`, failed tool
+   event, `evaluation_result="needs_retry"`, retry event, and appended error expose
+   it. The graph moves through `retry`, then selects `tool` or `dead_letter` from
+   the updated attempt counter. Attempts increase monotonically and exhaustion ends
+   at `dead_letter → finalize → END`. Residual risk remains because the core uses a
+   mock tool and substring evaluator rather than production timeout, backoff,
+   idempotency, and circuit-breaker controls.
+2. **Risky approval rejection.** The failure starts after `risky_action` proposes a
+   side effect and the approval mapping is rejected, missing, or malformed. The
+   approval mapping and event expose the decision. Only `approved is True` routes
+   to `tool`; every other value routes `clarify → finalize → END`, so the tool is
+   never reached. The contract test verifies this containment. Residual risk remains
+   because core mock mode auto-approves and does not authenticate a reviewer or
+   persist a decision timestamp. A rejection is a **safe workflow completion**. It
+   does not mean the action was approved or executed; it means the graph stopped
+   the action and returned a user-facing next step.
 
 ## 7. Persistence and recovery caveat
 
@@ -123,10 +153,81 @@ human-in-the-loop interrupt/resume interface with an explicit demonstration.
 
 ## 9. Improvement plan
 
-First, add durable checkpoint storage and an automated state-history replay test.
-Next, replace the mock approval path with a reviewed UI/API workflow, instrument
-tool and LLM latency separately, and add alerting for repeated dead-letter events.
+The single highest-priority production step is durable checkpoint storage with an
+automated process-restart replay test. It comes first because `MemorySaver` loses
+the verified state history when the process exits.
 """
+
+
+def _validate_generated_blocks(report: str) -> bool:
+    """Return whether every generated block exists, rejecting unsafe layouts."""
+    spans: list[tuple[int, int]] = []
+    marker_count = 0
+    for name in _GENERATED_BLOCK_NAMES:
+        start = f"<!-- BEGIN GENERATED:{name} -->"
+        end = f"<!-- END GENERATED:{name} -->"
+        start_count = report.count(start)
+        end_count = report.count(end)
+        marker_count += start_count + end_count
+        if start_count not in (0, 1) or end_count not in (0, 1):
+            raise ValueError("Report contains malformed generated-block markers")
+        if start_count != end_count:
+            raise ValueError("Report contains malformed generated-block markers")
+        if start_count:
+            start_index = report.index(start)
+            end_index = report.index(end)
+            if start_index >= end_index:
+                raise ValueError("Report contains malformed generated-block markers")
+            spans.append((start_index, end_index + len(end)))
+
+    if marker_count == 0:
+        return False
+    if len(spans) != len(_GENERATED_BLOCK_NAMES):
+        raise ValueError("Report contains an incomplete set of generated-block markers")
+    ordered_spans = sorted(spans)
+    if any(
+        left[1] > right[0]
+        for left, right in zip(ordered_spans, ordered_spans[1:], strict=False)
+    ):
+        raise ValueError("Report contains overlapping generated-block markers")
+    return True
+
+
+def _append_generated_blocks(
+    report: str, metrics_summary: str, scenario_results: str
+) -> str:
+    """Add updateable generated sections without changing existing report bytes."""
+    if report.endswith("\n\n"):
+        separator = ""
+    elif report.endswith("\n"):
+        separator = "\n"
+    else:
+        separator = "\n\n"
+    return f"""{report}{separator}## Generated metrics summary
+
+<!-- BEGIN GENERATED:METRICS_SUMMARY -->
+{metrics_summary}
+<!-- END GENERATED:METRICS_SUMMARY -->
+
+## Generated scenario results
+
+<!-- BEGIN GENERATED:SCENARIO_RESULTS -->
+{scenario_results}
+<!-- END GENERATED:SCENARIO_RESULTS -->
+"""
+
+
+def _replace_generated_block(report: str, name: str, content: str) -> str:
+    """Replace one marked block while retaining all surrounding narrative."""
+    start = f"<!-- BEGIN GENERATED:{name} -->"
+    end = f"<!-- END GENERATED:{name} -->"
+    before, separator, remainder = report.partition(start)
+    if not separator:
+        raise ValueError(f"Missing generated-block start marker: {name}")
+    _, separator, after = remainder.partition(end)
+    if not separator:
+        raise ValueError(f"Missing generated-block end marker: {name}")
+    return f"{before}{start}\n{content.rstrip()}\n{end}{after}"
 
 
 def _table_value(value: object) -> str:
@@ -139,4 +240,6 @@ def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
     """Write the rendered report to a file."""
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")
+    existing_report = path.read_bytes().decode("utf-8") if path.exists() else None
+    rendered = render_report(metrics, existing_report=existing_report)
+    path.write_bytes(rendered.encode("utf-8"))

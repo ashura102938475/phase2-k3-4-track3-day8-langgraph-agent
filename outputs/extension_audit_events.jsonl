@@ -4,8 +4,17 @@
 {"scenario_id": "S01_simple", "thread_id": "thread-S01_simple", "node": "finalize", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "intake", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "classify", "event_type": "completed", "metadata": {}}
-{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {}}
-{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "evaluate", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {"attempt": 0, "task_fingerprint": "65f4ae2198376962"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {"attempt": 0, "task_fingerprint": "2af25bd9c0d86815"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "evaluate", "event_type": "completed", "metadata": {"source": "llm"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "retry", "event_type": "retrying", "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {"attempt": 1, "task_fingerprint": "65f4ae2198376962"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {"attempt": 1, "task_fingerprint": "2af25bd9c0d86815"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "evaluate", "event_type": "completed", "metadata": {"source": "llm"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "retry", "event_type": "retrying", "metadata": {}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {"attempt": 2, "task_fingerprint": "65f4ae2198376962"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "tool", "event_type": "completed", "metadata": {"attempt": 2, "task_fingerprint": "2af25bd9c0d86815"}}
+{"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "evaluate", "event_type": "completed", "metadata": {"source": "heuristic_fallback"}}
 {"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "answer", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S02_tool", "thread_id": "thread-S02_tool", "node": "finalize", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S03_missing", "thread_id": "thread-S03_missing", "node": "intake", "event_type": "completed", "metadata": {}}
@@ -17,25 +26,32 @@
 {"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "risky_action", "event_type": "pending_approval", "metadata": {}}
 {"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "approval", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "tool", "event_type": "completed", "metadata": {}}
-{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "evaluate", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "evaluate", "event_type": "completed", "metadata": {"source": "llm"}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "retry", "event_type": "retrying", "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "tool", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "evaluate", "event_type": "completed", "metadata": {"source": "llm"}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "retry", "event_type": "retrying", "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "tool", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "evaluate", "event_type": "completed", "metadata": {"source": "heuristic_fallback"}}
 {"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "answer", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S04_risky", "thread_id": "thread-S04_risky", "node": "finalize", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "intake", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "classify", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "retry", "event_type": "retrying", "metadata": {}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "tool", "event_type": "failed", "metadata": {}}
-{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "evaluate", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "evaluate", "event_type": "completed", "metadata": {"source": "policy_guard"}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "retry", "event_type": "retrying", "metadata": {}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "tool", "event_type": "completed", "metadata": {}}
-{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "evaluate", "event_type": "completed", "metadata": {}}
-{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "answer", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "evaluate", "event_type": "completed", "metadata": {"source": "llm"}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "retry", "event_type": "retrying", "metadata": {}}
+{"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "dead_letter", "event_type": "failed", "metadata": {}}
 {"scenario_id": "S05_error", "thread_id": "thread-S05_error", "node": "finalize", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "intake", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "classify", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "risky_action", "event_type": "pending_approval", "metadata": {}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "approval", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "tool", "event_type": "completed", "metadata": {}}
-{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "evaluate", "event_type": "completed", "metadata": {}}
+{"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "evaluate", "event_type": "completed", "metadata": {"source": "heuristic_fallback"}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "answer", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S06_delete", "thread_id": "thread-S06_delete", "node": "finalize", "event_type": "completed", "metadata": {}}
 {"scenario_id": "S07_dead_letter", "thread_id": "thread-S07_dead_letter", "node": "intake", "event_type": "completed", "metadata": {}}
